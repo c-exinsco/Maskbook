@@ -6,6 +6,8 @@ import { RedPacketMessage } from './messages'
 import * as database from './database'
 import { resolveChainName } from '../../web3/pipes'
 import Services from '../../extension/service'
+import { getChainId } from '../../extension/background-script/EthereumService'
+import * as subgraph from './apis'
 
 export async function claimRedPacket(
     from: string,
@@ -72,4 +74,8 @@ export async function getRedPacketsFromChain(from: string, startBlock: number) {
     const response = await fetch(url.toString())
     if (response.status !== 200) return []
     return response.json() as Promise<History.RedPacketRecord[]>
+}
+
+export async function getAllRedPackets(address: string) {
+    return subgraph.getAllRedPackets(address)
 }

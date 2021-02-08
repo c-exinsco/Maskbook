@@ -12,6 +12,13 @@ export const RED_PACKET_CONSTANTS = {
         [ChainId.Kovan]: '',
         [ChainId.Gorli]: '',
     },
+    SUBGRAPH_URL: {
+        [ChainId.Mainnet]: 'https://api.thegraph.com/subgraphs/name/dimensiondev/mask-red-packet',
+        [ChainId.Ropsten]: 'https://api.thegraph.com/subgraphs/name/dimensiondev/mask-red-packet-ropsten',
+        [ChainId.Rinkeby]: '',
+        [ChainId.Kovan]: '',
+        [ChainId.Gorli]: '',
+    },
 }
 
 export const RED_PACKET_CONTRACT_VERSION = 1
