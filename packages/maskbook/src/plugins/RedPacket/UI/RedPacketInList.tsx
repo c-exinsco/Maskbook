@@ -141,7 +141,6 @@ export function RedPacketInList(props: RedPacketInListProps) {
     )
 }
 export interface RedPacketInHistoryListProps {
-    key: string
     data: RedPacket_InMask_Record
     onSelect: (payload: RedPacketJSONPayload) => void
     onClose: () => void

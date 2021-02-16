@@ -88,12 +88,13 @@ function RedPacketHistoryList(props: RedPacketHistoryListProps) {
             ) : (
                 <List>
                     {payloads.map((data) => (
-                        <RedPacketInHistoryList
-                            key={data.history.rpid}
-                            data={data}
-                            onSelect={onSelect}
-                            onClose={onClose}
-                        />
+                        <div key={data.history.rpid}>
+                            <RedPacketInHistoryList
+                                data={data}
+                                onSelect={onSelect}
+                                onClose={onClose}
+                            />
+                        </div>
                     ))}
                 </List>
             )}
