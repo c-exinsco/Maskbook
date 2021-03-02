@@ -1,12 +1,8 @@
 import { makeStyles, Typography, List } from '@material-ui/core'
 import type { RedPacketJSONPayload, RedPacket_InMask_Record } from '../types'
 import { useAccount } from '../../../web3/hooks/useAccount'
-import { FixedSizeList, FixedSizeListProps } from 'react-window'
-import { RedPacketInList, RedPacketInHistoryList } from './RedPacketInList'
-import { useRedPacketsFromChain } from '../hooks/useRedPacket'
-import { usePayloadsComputed } from '../hooks/usePayloadComputed'
+import { RedPacketInHistoryList } from './RedPacketInList'
 import { useAllRedPackets } from '../hooks/useAllRedPackets'
-import { useChainIdValid } from '../../../web3/hooks/useChainId'
 
 //#region red packet list UI
 const useStyles = makeStyles((theme) => ({
@@ -29,46 +25,6 @@ const useStyles = makeStyles((theme) => ({
         textAlign: 'center',
     },
 }))
-
-interface RedPacketListProps {
-    loading?: boolean
-    payloads: RedPacketJSONPayload[]
-    FixedSizeListProps?: Partial<FixedSizeListProps>
-    onSelect?: (payload: RedPacketJSONPayload) => void
-}
-
-function RedPacketList(props: RedPacketListProps) {
-    const { loading = false, payloads, FixedSizeListProps, onSelect } = props
-    const classes = useStyles()
-    return (
-        <div className={classes.root}>
-            {loading ? (
-                <Typography className={classes.placeholder} color="textSecondary">
-                    Loading...
-                </Typography>
-            ) : payloads.length === 0 ? (
-                <Typography className={classes.placeholder} color="textSecondary">
-                    No Data
-                </Typography>
-            ) : (
-                <FixedSizeList
-                    className={classes.list}
-                    width="100%"
-                    height={350}
-                    overscanCount={4}
-                    itemSize={60}
-                    itemData={{
-                        payloads,
-                        onClick: onSelect,
-                    }}
-                    itemCount={payloads.length}
-                    {...FixedSizeListProps}>
-                    {RedPacketInList}
-                </FixedSizeList>
-            )}
-        </div>
-    )
-}
 
 interface RedPacketHistoryListProps {
     payloads: RedPacket_InMask_Record[]
@@ -118,33 +74,5 @@ export function RedPacketBacklogList(props: RedPacketBacklogListProps) {
         )
     }
     return <RedPacketHistoryList payloads={payloads!} onSelect={onSelect} onClose={onClose} />
-}
-//#endregion
-
-//#region inbound list
-export interface RedPacketInboundListProps extends withClasses<never> {
-    onSelect?: (payload: RedPacketJSONPayload) => void
-}
-
-export function RedPacketInboundList(props: RedPacketInboundListProps) {
-    const { onSelect } = props
-    const { value: records = [], loading } = useRedPacketsFromChain()
-    const payloads = usePayloadsComputed('claim', records)
-    const chainIdValid = useChainIdValid()
-    return <RedPacketList loading={loading} payloads={chainIdValid ? payloads : []} onSelect={onSelect} />
-}
-//#endregion
-
-//#region outbound list
-export interface RedPacketOutboundListProps extends withClasses<never> {
-    onSelect?: (payload: RedPacketJSONPayload) => void
-}
-
-export function RedPacketOutboundList(props: RedPacketOutboundListProps) {
-    const { onSelect } = props
-    const { value: records = [], loading } = useRedPacketsFromChain()
-    const payloads = usePayloadsComputed('create', records)
-    const chainIdValid = useChainIdValid()
-    return <RedPacketList loading={loading} payloads={chainIdValid ? payloads : []} onSelect={onSelect} />
 }
 //#endregion
