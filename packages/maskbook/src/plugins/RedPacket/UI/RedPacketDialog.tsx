@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { DialogContent } from '@material-ui/core'
 import AbstractTab, { AbstractTabProps } from '../../../extension/options-page/DashboardComponents/AbstractTab'
-import type { RedPacketJSONPayload } from '../types'
+import { RedPacketJSONPayload, DialogTabs } from '../types'
 import { editActivatedPostMetadata } from '../../../protocols/typed-message/global-state'
 import { RedPacketMetaKey } from '../constants'
 import { useI18N } from '../../../utils/i18n-next-ui'
@@ -33,11 +33,11 @@ export default function RedPacketDialog(props: RedPacketDialogProps) {
         [onConfirm],
     )
 
-    const state = useState(0)
+    const state = useState(DialogTabs.create)
 
     const onClose = useCallback(() => {
         const [, setValue] = state
-        setValue(0)
+        setValue(DialogTabs.create)
         props.onClose()
     }, [props, state])
 
