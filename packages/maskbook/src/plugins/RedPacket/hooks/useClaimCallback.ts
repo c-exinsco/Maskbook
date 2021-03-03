@@ -2,9 +2,10 @@ import { useCallback } from 'react'
 import Web3Utils from 'web3-utils'
 import { useRedPacketContract } from '../contracts/useRedPacketContract'
 import { useTransactionState, TransactionStateType } from '../../../web3/hooks/useTransactionState'
-import Services from '../../../extension/service'
 import type { NonPayableTx } from '@dimensiondev/contracts/types/types'
+import Services from '../../../extension/service'
 import { TransactionEventType } from '../../../web3/types'
+import type { TransactionReceipt } from 'web3-core'
 
 export function useClaimCallback(from: string, id?: string, password?: string) {
     const [claimState, setClaimState] = useTransactionState()
@@ -43,25 +44,33 @@ export function useClaimCallback(from: string, id?: string, password?: string) {
             throw error
         })
 
-        // send transaction and wait for hash
-        return new Promise<string>((resolve, reject) => {
-            redPacketContract.methods
-                .claim(...params)
-                .send(config as NonPayableTx)
-                .on(TransactionEventType.TRANSACTION_HASH, (hash) => {
-                    setClaimState({
-                        type: TransactionStateType.HASH,
-                        hash,
-                    })
-                    resolve(hash)
+        // step 2-1: blocking
+        return new Promise<void>((resolve, reject) => {
+            const promiEvent = redPacketContract.methods.claim(...params).send(config as NonPayableTx)
+
+            promiEvent.on(TransactionEventType.TRANSACTION_HASH, (hash: string) => {
+                setClaimState({
+                    type: TransactionStateType.HASH,
+                    hash,
                 })
-                .on(TransactionEventType.ERROR, (error) => {
-                    setClaimState({
-                        type: TransactionStateType.FAILED,
-                        error,
-                    })
-                    reject(error)
+                resolve()
+            })
+
+            promiEvent.on(TransactionEventType.CONFIRMATION, (no: number, receipt: TransactionReceipt) => {
+                setClaimState({
+                    type: TransactionStateType.CONFIRMED,
+                    no,
+                    receipt,
                 })
+                resolve()
+            })
+            promiEvent.on(TransactionEventType.ERROR, (error: Error) => {
+                setClaimState({
+                    type: TransactionStateType.FAILED,
+                    error,
+                })
+                reject(error)
+            })
         })
     }, [id, password, from, redPacketContract])
 
