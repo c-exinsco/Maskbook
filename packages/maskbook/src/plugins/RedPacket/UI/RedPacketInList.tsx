@@ -4,7 +4,7 @@ import { Skeleton } from '@material-ui/core'
 import classNames from 'classnames'
 import { ListItem, ListItemText, makeStyles, Theme, Typography, Box } from '@material-ui/core'
 import { Trans } from 'react-i18next'
-import type { RedPacketJSONPayload, RedPacket_InMask_Record } from '../types'
+import type { RedPacketJSONPayload, RedPacketRecordWithHistory } from '../types'
 import { TransactionStateType } from '../../../web3/hooks/useTransactionState'
 import { useRemoteControlledDialog } from '../../../utils/hooks/useRemoteControlledDialog'
 import { useI18N } from '../../../utils/i18n-next-ui'
@@ -142,7 +142,7 @@ export function RedPacketInList(props: RedPacketInListProps) {
     )
 }
 export interface RedPacketInHistoryListProps {
-    data: RedPacket_InMask_Record
+    data: RedPacketRecordWithHistory
     onSelect: (payload: RedPacketJSONPayload) => void
     onClose: () => void
 }

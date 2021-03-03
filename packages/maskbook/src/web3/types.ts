@@ -37,6 +37,12 @@ export interface ERC20TokenDetailed extends ERC20Token {
 }
 //#endregion
 
+//#region TokenOutMask
+export type TokenOutMask = Omit<EtherTokenDetailed | ERC20TokenDetailed, 'chainId'> & {
+    chain_id: ChainId
+}
+//#endregion
+
 //#region ERC721
 export interface ERC721Token {
     type: EthereumTokenType.ERC721
