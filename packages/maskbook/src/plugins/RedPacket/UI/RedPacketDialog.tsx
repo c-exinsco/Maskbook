@@ -9,7 +9,6 @@ import { RedPacketForm } from './RedPacketForm'
 import { RedPacketBacklogList } from './RedPacketList'
 import { usePortalShadowRoot } from '@dimensiondev/maskbook-shared'
 import { InjectedDialog } from '../../../components/shared/InjectedDialog'
-import { RedPacketRPC } from '../messages'
 
 interface RedPacketDialogProps extends withClasses<never> {
     open: boolean
