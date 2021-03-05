@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, ChangeEvent, useEffect } from 'react'
+import { useState, useRef, useCallback, useMemo, ChangeEvent, useEffect } from 'react'
 import { makeStyles, FormControl, TextField, InputLabel, Select, MenuItem, MenuProps } from '@material-ui/core'
 import { omit } from 'lodash-es'
 import { v4 as uuid } from 'uuid'
@@ -16,13 +16,13 @@ import {
 import { useI18N } from '../../../utils/i18n-next-ui'
 import { EthereumTokenType, EthereumNetwork, NativeTokenDetailed, ERC20TokenDetailed } from '../../../web3/types'
 import { useAccount } from '../../../web3/hooks/useAccount'
-import { useChainId, useChainIdValid } from '../../../web3/hooks/useChainId'
+import { useChainId } from '../../../web3/hooks/useChainId'
 import { TokenAmountPanel } from '../../../web3/UI/TokenAmountPanel'
 import { useConstant } from '../../../web3/hooks/useConstant'
 import { useCreateCallback } from '../hooks/useCreateCallback'
 import ActionButton from '../../../extension/options-page/DashboardComponents/ActionButton'
 import { TransactionStateType } from '../../../web3/hooks/useTransactionState'
-import type { RedPacketJSONPayload } from '../types'
+import type { RedPacketJSONPayload, RedPacketRecord } from '../types'
 import { resolveChainName } from '../../../web3/pipes'
 import { SelectTokenDialogEvent, WalletMessages } from '../../Wallet/messages'
 import { useRemoteControlledDialog } from '../../../utils/hooks/useRemoteControlledDialog'
@@ -31,6 +31,7 @@ import { useTokenBalance } from '../../../web3/hooks/useTokenBalance'
 import { EthereumMessages } from '../../Ethereum/messages'
 import { EthereumWalletConnectedBoundary } from '../../../web3/UI/EthereumWalletConnectedBoundary'
 import { EthereumERC20TokenApprovedBoundary } from '../../../web3/UI/EthereumERC20TokenApprovedBoundary'
+import { RedPacketRPC } from '../messages'
 
 const useStyles = makeStyles((theme) => ({
     line: {
@@ -70,7 +71,6 @@ export function RedPacketForm(props: RedPacketFormProps) {
     // context
     const account = useAccount()
     const chainId = useChainId()
-    const chainIdValid = useChainIdValid()
     const RED_PACKET_ADDRESS = useConstant(RED_PACKET_CONSTANTS, 'HAPPY_RED_PACKET_ADDRESS')
 
     //#region select token
@@ -131,9 +131,10 @@ export function RedPacketForm(props: RedPacketFormProps) {
     )
     //#endregion
 
-    // send transaction and wait for hash
+    //#region blocking
+    const password = uuid()
     const [createSettings, createState, createCallback, resetCreateCallback] = useCreateCallback({
-        password: uuid(),
+        password,
         duration: 60 /* seconds */ * 60 /* mins */ * 24 /* hours */,
         isRandom: Boolean(isRandom),
         name: senderName,
@@ -143,6 +144,12 @@ export function RedPacketForm(props: RedPacketFormProps) {
         total: totalAmount.toFixed(),
     })
     //#endregion
+
+    // assemble JSON payload
+    const payload = useRef<RedPacketJSONPayload>({
+        contract_address: HAPPY_RED_PACKET_ADDRESS,
+        network: resolveChainName(chainId) as EthereumNetwork,
+    } as RedPacketJSONPayload)
 
     //#region remote controlled transaction dialog
     const { setDialog: setTransactionDialog } = useRemoteControlledDialog(
@@ -170,34 +177,29 @@ export function RedPacketForm(props: RedPacketFormProps) {
                 total: string
             }
 
-            // assemble JSON payload
-            const payload: RedPacketJSONPayload = {
-                contract_version: 1,
-                contract_address: HAPPY_RED_PACKET_ADDRESS,
-                rpid: CreationSuccess.id,
-                password: createSettings.password,
-                shares: createSettings.shares,
-                sender: {
-                    address: account,
-                    name: createSettings.name,
-                    message: createSettings.message,
-                },
-                is_random: createSettings.isRandom,
-                total: CreationSuccess.total,
-                creation_time: Number.parseInt(CreationSuccess.creation_time, 10) * 1000,
-                duration: createSettings.duration,
-                network: resolveChainName(chainId) as EthereumNetwork,
-                token_type: createSettings.token.type,
+            payload.current.sender = {
+                address: account,
+                name: createSettings.name,
+                message: createSettings.message,
             }
+            payload.current.is_random = createSettings.isRandom
+            payload.current.shares = createSettings.shares
+            payload.current.password = createSettings.password
+            payload.current.token_type = createSettings.token.type
+            payload.current.rpid = CreationSuccess.id
+            payload.current.total = CreationSuccess.total
+            payload.current.duration = createSettings.duration
+            payload.current.creation_time = Number.parseInt(CreationSuccess.creation_time, 10) * 1000
+
             if (createSettings.token.type === EthereumTokenType.ERC20)
-                payload.token = {
+                payload.current.token = {
                     name: '',
                     symbol: '',
                     ...omit(createSettings.token, ['type', 'chainId']),
                 }
 
             // output the redpacket as JSON payload
-            props.onCreate?.(payload)
+            props.onCreate?.(payload.current)
 
             // always reset amount
             setRawAmount('0')
@@ -206,6 +208,19 @@ export function RedPacketForm(props: RedPacketFormProps) {
 
     // open the transaction dialog
     useEffect(() => {
+        // storing the created red packet in DB, it helps retrieve red packet password later
+        // save to the database early, otherwise red-packet would lose when close the tx dialog or
+        //  web page before create successfully.
+        if (createState.type === TransactionStateType.HASH_WAIT) {
+            payload.current.txid = createState.hash
+            const record: RedPacketRecord = {
+                id: createState.hash,
+                from: '',
+                password,
+            }
+            RedPacketRPC.discoverRedPacket(record)
+        }
+
         if (!token || createState.type === TransactionStateType.UNKNOWN) return
         setTransactionDialog({
             open: true,

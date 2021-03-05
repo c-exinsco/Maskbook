@@ -7,6 +7,7 @@ import { useTransactionState, TransactionStateType } from '../../../web3/hooks/u
 import { NativeTokenDetailed, ERC20TokenDetailed, EthereumTokenType, TransactionEventType } from '../../../web3/types'
 import { useAccount } from '../../../web3/hooks/useAccount'
 import Services from '../../../extension/service'
+import type { TransactionReceipt } from 'web3-core'
 
 export interface RedPacketSettings {
     password: string
@@ -94,32 +95,38 @@ export function useCreateCallback(redPacketSettings: RedPacketSettings) {
         // send transaction and wait for hash
         return new Promise<void>(async (resolve, reject) => {
             const promiEvent = redPacketContract.methods.create_red_packet(...params).send(config as PayableTx)
+            promiEvent.on(TransactionEventType.TRANSACTION_HASH, (hash: string) => {
+                setCreateState({
+                    type: TransactionStateType.HASH_WAIT,
+                    hash,
+                })
+            })
+            promiEvent.on(TransactionEventType.RECEIPT, (receipt: TransactionReceipt) => {
+                setCreateSettings(redPacketSettings)
+                setCreateState({
+                    type: TransactionStateType.CONFIRMED,
+                    no: 0,
+                    receipt,
+                })
+            })
 
-            promiEvent
-                .on(TransactionEventType.RECEIPT, (receipt) => {
-                    setCreateSettings(redPacketSettings)
-                    setCreateState({
-                        type: TransactionStateType.CONFIRMED,
-                        no: 0,
-                        receipt,
-                    })
+            promiEvent.on(TransactionEventType.CONFIRMATION, (no, receipt) => {
+                setCreateSettings(redPacketSettings)
+                setCreateState({
+                    type: TransactionStateType.CONFIRMED,
+                    no,
+                    receipt,
                 })
-                .on(TransactionEventType.CONFIRMATION, (no, receipt) => {
-                    setCreateSettings(redPacketSettings)
-                    setCreateState({
-                        type: TransactionStateType.CONFIRMED,
-                        no,
-                        receipt,
-                    })
-                    resolve()
+                resolve()
+            })
+
+            promiEvent.on(TransactionEventType.ERROR, (error) => {
+                setCreateState({
+                    type: TransactionStateType.FAILED,
+                    error,
                 })
-                .on(TransactionEventType.ERROR, (error) => {
-                    setCreateState({
-                        type: TransactionStateType.FAILED,
-                        error,
-                    })
-                    reject(error)
-                })
+                reject(error)
+            })
         })
     }, [account, redPacketContract, redPacketSettings])
 
