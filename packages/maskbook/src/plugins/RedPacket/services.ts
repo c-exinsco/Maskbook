@@ -56,6 +56,7 @@ export async function getRedPacketHistory(address: string) {
         const record = await database.getRedPacket(history.txid)
         if (history.chain_id === chainId && record) {
             history.payload.password = history.password = record.password
+            history.payload.contract_version = history.contract_version = record.contract_version
             historysWithPassword.push(history)
         }
     }

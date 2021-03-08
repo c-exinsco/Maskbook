@@ -6,9 +6,9 @@ import type { NonPayableTx } from '@dimensiondev/contracts/types/types'
 import { TransactionEventType } from '../../../web3/types'
 import type { TransactionReceipt } from 'web3-core'
 
-export function useRefundCallback(from: string, id?: string) {
+export function useRefundCallback(version: number, from: string, id?: string) {
     const [refundState, setRefundState] = useTransactionState()
-    const redPacketContract = useRedPacketContract()
+    const redPacketContract = useRedPacketContract(version)
 
     const refundCallback = useCallback(async () => {
         if (!redPacketContract || !id) {
