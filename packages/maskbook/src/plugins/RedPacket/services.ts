@@ -44,6 +44,11 @@ export async function claimRedPacket(
 }
 
 export async function discoverRedPacket(record: RedPacketRecord) {
+    if (record.contract_version === 1) {
+        const txid = await subgraph.getRedPacketTxid(record.id)
+        if (!txid) return
+        record.id = txid
+    }
     database.addRedPacket(record)
     RedPacketMessage.events.redPacketUpdated.sendToAll(undefined)
 }
