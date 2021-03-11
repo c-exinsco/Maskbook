@@ -10,7 +10,7 @@ import type {
     RedPacketHistory,
 } from '../types'
 import { resolveChainName } from '../../../web3/pipes'
-import { EthereumNetwork, EthereumTokenType } from '../../../web3/types'
+import { EthereumNetwork, EthereumTokenType, ChainId } from '../../../web3/types'
 
 const redPacketBasicKeys = [
     'contract_address',
@@ -86,8 +86,8 @@ export async function getRedPacketTxid(rpid: string) {
     return redPackets[0] ? redPackets[0].txid : null
 }
 
-export async function getRedPacketHistory(address: string) {
-    const response = await fetch(getConstant(RED_PACKET_CONSTANTS, 'SUBGRAPH_URL', await getChainId()), {
+export async function getRedPacketHistory(address: string, chainId: ChainId) {
+    const response = await fetch(getConstant(RED_PACKET_CONSTANTS, 'SUBGRAPH_URL', chainId), {
         method: 'POST',
         mode: 'cors',
         body: JSON.stringify({
