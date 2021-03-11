@@ -1,6 +1,6 @@
 import * as jwt from 'jsonwebtoken'
 import { sha3 } from 'web3-utils'
-import type { RedPacketRecord, RedPacketHistory } from './types'
+import type { RedPacketRecord } from './types'
 import { RedPacketMessage } from './messages'
 import * as database from './database'
 import { resolveChainName } from '../../web3/pipes'
@@ -53,11 +53,12 @@ export async function discoverRedPacket(record: RedPacketRecord) {
     RedPacketMessage.events.redPacketUpdated.sendToAll(undefined)
 }
 
-export async function getRedPacketHistory(address: string) {
+export async function getRedPacketHistoryWithPassword(address: string) {
     const chainId = await getChainId()
     const historys = await subgraph.getRedPacketHistory(address)
     const historysWithPassword = []
     for (const history of historys) {
+        await database.updateV1ToV2(history)
         const record = await database.getRedPacket(history.txid)
         if (history.chain_id === chainId && record) {
             history.payload.password = history.password = record.password
