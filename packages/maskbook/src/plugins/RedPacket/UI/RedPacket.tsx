@@ -168,17 +168,19 @@ export function RedPacket(props: RedPacketProps) {
 
     //#region remote controlled transaction dialog
     const postLink = usePostLink()
-    const shareLink = activatedSocialNetworkUI.utils.getShareLinkURL?.(
-        canClaim
-            ? [
-                  `I just claimed a red packet from @${payload.sender.name}. Follow @realMaskbook (mask.io) to claim red packets.`,
-                  '#mask_io #RedPacket',
-                  postLink,
-              ]
-                  .filter(Boolean)
-                  .join('\n')
-            : '',
-    )
+    const shareLink = activatedSocialNetworkUI.utils
+        .getShareLinkURL?.(
+            canClaim
+                ? [
+                      `I just claimed a red packet from @${payload.sender.name}. Follow @realMaskbook (mask.io) to claim red packets.`,
+                      '#mask_io #RedPacket',
+                      postLink,
+                  ]
+                      .filter(Boolean)
+                      .join('\n')
+                : '',
+        )
+        .toString()
     const [claimState, claimCallback, resetClaimCallback] = useClaimCallback(
         payload.contract_version,
         account,
