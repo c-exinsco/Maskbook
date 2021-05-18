@@ -238,7 +238,7 @@ export function ToolboxHint(props: ToolboxHintProps) {
         <>
             <div className={classes.wrapper} onClick={openMenu}>
                 <div className={classes.button}>
-                    <MaskbookSharpIconOfSize classes={{ root: classes.icon }} size={22} />
+                    <MaskbookSharpIconOfSize classes={{ root: classes.icon }} />
                     <Typography className={classes.title}>Mask Network</Typography>
                 </div>
             </div>
@@ -253,7 +253,7 @@ export function ToolboxHint(props: ToolboxHintProps) {
                             providerType={selectedWalletProvider}
                         />
                     ) : (
-                        <WalletSharp classes={{ root: classes.icon }} size={24} />
+                        <WalletSharp classes={{ root: classes.icon }} />
                     )}
 
                     <Typography className={classes.title}>
