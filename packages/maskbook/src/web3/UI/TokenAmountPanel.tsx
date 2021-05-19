@@ -1,25 +1,14 @@
 import { useCallback, ChangeEvent, useMemo } from 'react'
-import {
-    makeStyles,
-    createStyles,
-    TextField,
-    Typography,
-    Box,
-    Chip,
-    InputProps,
-    ChipProps,
-    TextFieldProps,
-} from '@material-ui/core'
+import { makeStyles, TextField, Typography, Box, Chip, InputProps, ChipProps, TextFieldProps } from '@material-ui/core'
 import classNames from 'classnames'
-import BigNumber from 'bignumber.js'
 import { SelectTokenChip, SelectTokenChipProps } from './SelectTokenChip'
-import { formatBalance } from '../../plugins/Wallet/formatter'
+import { formatBalance, FormattedBalance } from '@dimensiondev/maskbook-shared'
 import { MIN_AMOUNT_LENGTH, MAX_AMOUNT_LENGTH } from '../constants'
 import { useStylesExtends } from '../../components/custom-ui-helper'
 import type { EtherTokenDetailed, ERC20TokenDetailed } from '../types'
 
 const useStyles = makeStyles((theme) => {
-    return createStyles({
+    return {
         root: {},
         input: {
             '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
@@ -49,13 +38,14 @@ const useStyles = makeStyles((theme) => {
         inputShrinkLabel: {
             transform: 'translate(17px, -3px) scale(0.75) !important',
         },
-    })
+    }
 })
 
-export interface TokenAmountPanelProps extends withClasses<never> {
+export interface TokenAmountPanelProps extends withClasses<'root'> {
     amount: string
     maxAmount?: string
     balance: string
+    disableToken?: boolean
     disableBalance?: boolean
     label: string
     token?: EtherTokenDetailed | ERC20TokenDetailed | null
@@ -68,7 +58,17 @@ export interface TokenAmountPanelProps extends withClasses<never> {
 }
 
 export function TokenAmountPanel(props: TokenAmountPanelProps) {
-    const { amount, maxAmount, balance, token, onAmountChange, label, disableBalance = false, MaxChipProps } = props
+    const {
+        amount,
+        maxAmount,
+        balance,
+        token,
+        onAmountChange,
+        label,
+        disableToken = false,
+        disableBalance = false,
+        MaxChipProps,
+    } = props
 
     const classes = useStylesExtends(useStyles(), props)
 
@@ -112,7 +112,7 @@ export function TokenAmountPanel(props: TokenAmountPanelProps) {
                     spellCheck: false,
                     className: classes.input,
                 },
-                endAdornment: token ? (
+                endAdornment: disableToken ? null : token ? (
                     <Box
                         className={classes.token}
                         sx={{
@@ -127,7 +127,8 @@ export function TokenAmountPanel(props: TokenAmountPanelProps) {
                                 color="textSecondary"
                                 variant="body2"
                                 component="span">
-                                Balance: {formatBalance(new BigNumber(balance), token.decimals, 6)}
+                                Balance:
+                                <FormattedBalance value={balance} decimals={token.decimals} significant={6} />
                             </Typography>
                         ) : null}
                         <Box
@@ -148,9 +149,7 @@ export function TokenAmountPanel(props: TokenAmountPanelProps) {
                                     color="primary"
                                     variant="outlined"
                                     onClick={() => {
-                                        onAmountChange(
-                                            formatBalance(new BigNumber(maxAmount ?? balance), token.decimals),
-                                        )
+                                        onAmountChange(formatBalance(maxAmount ?? balance, token.decimals))
                                     }}
                                     {...MaxChipProps}
                                 />

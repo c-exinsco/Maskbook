@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useAsyncRetry, useTimeoutFn } from 'react-use'
-import { makeStyles, createStyles } from '@material-ui/core'
+import { makeStyles } from '@material-ui/core'
 import type { Trade } from '@uniswap/sdk'
 
 import { useStylesExtends } from '../../../../components/custom-ui-helper'
@@ -15,7 +15,7 @@ import { SwapResponse, TokenPanelType, TradeComputed, TradeProvider, Coin } from
 import { delay } from '../../../../utils/utils'
 import { TransactionStateType } from '../../../../web3/hooks/useTransactionState'
 import { useRemoteControlledDialog } from '../../../../utils/hooks/useRemoteControlledDialog'
-import { formatBalance } from '../../../Wallet/formatter'
+import { formatBalance } from '@dimensiondev/maskbook-shared'
 import { TradePairViewer } from '../uniswap/TradePairViewer'
 import { useValueRef } from '../../../../utils/hooks/useValueRef'
 import { currentTradeProviderSettings } from '../../settings'
@@ -27,13 +27,14 @@ import { EthereumMessages } from '../../../Ethereum/messages'
 import Services from '../../../../extension/service'
 import { UST } from '../../constants'
 import { SelectTokenDialogEvent, WalletMessages } from '../../../Wallet/messages'
-import { useChainId } from '../../../../web3/hooks/useChainState'
+import { useChainId } from '../../../../web3/hooks/useBlockNumber'
 import { createERC20Token, createEtherToken } from '../../../../web3/helpers'
 import { PluginTraderRPC } from '../../messages'
 import { isTwitter } from '../../../../social-network-adaptor/twitter.com/base'
+import { isEtherWrapper } from '../../helpers'
 
 const useStyles = makeStyles((theme) => {
-    return createStyles({
+    return {
         root: {
             display: 'flex',
             flexDirection: 'column',
@@ -49,17 +50,17 @@ const useStyles = makeStyles((theme) => {
         router: {
             marginTop: 0,
         },
-    })
+    }
 })
 
 export interface TraderProps extends withClasses<never> {
-    coin: Coin
-    tokenDetailed: ERC20TokenDetailed | EtherTokenDetailed | undefined
+    coin?: Coin
+    tokenDetailed?: ERC20TokenDetailed | EtherTokenDetailed
 }
 
 export function Trader(props: TraderProps) {
     const { coin, tokenDetailed } = props
-    const { decimals } = tokenDetailed ?? coin
+    const { decimals } = tokenDetailed ?? coin ?? {}
     const chainId = useChainId()
     const classes = useStylesExtends(useStyles(), props)
 
@@ -75,12 +76,12 @@ export function Trader(props: TraderProps) {
     useEffect(() => {
         dispatchTradeStore({
             type: TradeActionType.UPDATE_INPUT_TOKEN,
-            token: chainId === ChainId.Mainnet && coin.is_mirrored ? UST : createEtherToken(chainId),
+            token: chainId === ChainId.Mainnet && coin?.is_mirrored ? UST : createEtherToken(chainId),
         })
         dispatchTradeStore({
             type: TradeActionType.UPDATE_OUTPUT_TOKEN,
-            token: coin.eth_address
-                ? createERC20Token(chainId, coin.eth_address!, decimals ?? 0, coin.name ?? '', coin.symbol ?? '')
+            token: coin?.eth_address
+                ? createERC20Token(chainId, coin.eth_address, decimals ?? 0, coin.name ?? '', coin.symbol ?? '')
                 : undefined,
         })
     }, [coin, chainId, decimals])
@@ -157,7 +158,7 @@ export function Trader(props: TraderProps) {
     //#region select token
     const excludeTokens = [inputToken, outputToken].filter(Boolean).map((x) => x?.address) as string[]
     const [focusedTokenPanelType, setFocusedTokenPanelType] = useState(TokenPanelType.Input)
-    const [, setSelectTokenDialogOpen] = useRemoteControlledDialog(
+    const { setDialog: setSelectTokenDialog } = useRemoteControlledDialog(
         WalletMessages.events.selectTokenDialogUpdated,
         useCallback(
             (ev: SelectTokenDialogEvent) => {
@@ -176,7 +177,7 @@ export function Trader(props: TraderProps) {
     const onTokenChipClick = useCallback(
         (type: TokenPanelType) => {
             setFocusedTokenPanelType(type)
-            setSelectTokenDialogOpen({
+            setSelectTokenDialog({
                 open: true,
                 uuid: String(type),
                 disableEther: false,
@@ -230,9 +231,9 @@ export function Trader(props: TraderProps) {
         .getShareLinkURL?.(
             trade && inputToken && outputToken
                 ? [
-                      `I just swapped ${formatBalance(trade.inputAmount, inputToken.decimals ?? 0, 6)} ${cashTag}${
+                      `I just swapped ${formatBalance(trade.inputAmount, inputToken.decimals, 6)} ${cashTag}${
                           inputToken.symbol
-                      } for ${formatBalance(trade.outputAmount, outputToken.decimals ?? 0, 6)} ${cashTag}${
+                      } for ${formatBalance(trade.outputAmount, outputToken.decimals, 6)} ${cashTag}${
                           outputToken.symbol
                       }. Follow @realMaskbook (mask.io) to swap cryptocurrencies on Twitter.`,
                       '#mask_io',
@@ -242,7 +243,7 @@ export function Trader(props: TraderProps) {
         .toString()
 
     // close the transaction dialog
-    const [_, setTransactionDialogOpen] = useRemoteControlledDialog(
+    const { setDialog: setTransactionDialog } = useRemoteControlledDialog(
         EthereumMessages.events.transactionDialogUpdated,
         (ev) => {
             if (ev.open) return
@@ -264,18 +265,26 @@ export function Trader(props: TraderProps) {
     // open the transaction dialog
     useEffect(() => {
         if (tradeState.type === TransactionStateType.UNKNOWN) return
-        setTransactionDialogOpen({
+        setTransactionDialog({
             open: true,
             shareLink,
             state: tradeState,
             summary:
                 trade && inputToken && outputToken
-                    ? `Swapping ${formatBalance(trade.inputAmount, inputToken.decimals ?? 0, 6)} ${
+                    ? `Swapping ${formatBalance(trade.inputAmount, inputToken.decimals, 6)} ${
                           inputToken.symbol
-                      } for ${formatBalance(trade.outputAmount, outputToken.decimals ?? 0, 6)} ${outputToken.symbol}`
+                      } for ${formatBalance(trade.outputAmount, outputToken.decimals, 6)} ${outputToken.symbol}`
                     : '',
         })
     }, [tradeState /* update tx dialog only if state changed */])
+    //#endregion
+
+    //#region swap callback
+    const onSwap = useCallback(() => {
+        // no need to open the confirmation dialog if it (un)wraps ether
+        if (trade && isEtherWrapper(trade)) tradeCallback()
+        else setOpenConfirmDialog(true)
+    }, [trade])
     //#endregion
 
     return (
@@ -296,9 +305,9 @@ export function Trader(props: TraderProps) {
                 onReverseClick={onReverseClick}
                 onRefreshClick={onRefreshClick}
                 onTokenChipClick={onTokenChipClick}
-                onSwap={() => setOpenConfirmDialog(true)}
+                onSwap={onSwap}
             />
-            {trade && inputToken && outputToken ? (
+            {trade && !isEtherWrapper(trade) && inputToken && outputToken ? (
                 <>
                     <ConfirmDialog
                         open={openConfirmDialog}

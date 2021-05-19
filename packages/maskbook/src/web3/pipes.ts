@@ -85,10 +85,26 @@ export function resolveLinkOnEtherscan(chainId: ChainId) {
     }
 }
 
+export function checkIfChainSupport(chainId: number) {
+    return Object.values(ChainId).includes(chainId)
+}
+
 export function resolveTransactionLinkOnEtherscan(chainId: ChainId, tx: string) {
     return `${resolveLinkOnEtherscan(chainId)}/tx/${tx}`
 }
 
 export function resolveTokenLinkOnEtherscan(token: EtherToken | ERC20Token | ERC721Token) {
     return `${resolveLinkOnEtherscan(token.chainId)}/token/${token.address}`
+}
+
+export function resolveAddressLinkOnEtherscan(chainId: ChainId, address: string): string {
+    return `${resolveLinkOnEtherscan(chainId)}/address/${address}`
+}
+
+export function resolveBlockLinkOnEtherscan(chainId: ChainId, block: string): string {
+    return `${resolveLinkOnEtherscan(chainId)}/block/${block}`
+}
+
+export function resolveIPFSLink(ipfs: string): string {
+    return `https://ipfs.fleek.co/ipfs/${ipfs}`
 }

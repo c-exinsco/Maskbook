@@ -1,6 +1,6 @@
 import { useRef } from 'react'
-import { Typography, Card, List, Paper } from '@material-ui/core'
-import { makeStyles, createStyles, ThemeProvider, useTheme } from '@material-ui/core/styles'
+import { Typography, Card, List, Paper, ListItem, ListItemText, ListItemIcon } from '@material-ui/core'
+import { makeStyles, ThemeProvider, useTheme } from '@material-ui/core/styles'
 
 import { SettingsUI, SettingsUIEnum, SettingsUIDummy } from '../../../components/shared-settings/useSettingsUI'
 import {
@@ -9,7 +9,6 @@ import {
     languageSettings,
     allPostReplacementSettings,
     appearanceSettings,
-    currentMaskbookChainIdSettings,
     enableGroupSharingSettings,
     launchPageSettings,
     newDashboardConnection,
@@ -30,6 +29,7 @@ import PaletteIcon from '@material-ui/icons/Palette'
 import LanguageIcon from '@material-ui/icons/Language'
 import WifiIcon from '@material-ui/icons/Wifi'
 import LaunchIcon from '@material-ui/icons/Launch'
+import NewIcon from '@material-ui/icons/NewReleases'
 import DashboardRouterContainer from './Container'
 import { useI18N } from '../../../utils/i18n-next-ui'
 import { useModal } from '../DashboardDialogs/Base'
@@ -45,56 +45,54 @@ import { ChainId } from '../../../web3/types'
 import { extendsTheme } from '../../../utils/theme'
 import { resolvePortfolioDataProviderName } from '../../../plugins/Wallet/pipes'
 import { PortfolioProvider } from '../../../plugins/Wallet/types'
-import { currentPortfolioDataProviderSettings } from '../../../plugins/Wallet/settings'
+import { currentPortfolioDataProviderSettings, currentMaskbookChainIdSettings } from '../../../plugins/Wallet/settings'
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        root: {
-            width: '100%',
-            maxWidth: 360,
-            backgroundColor: theme.palette.background.paper,
+const useStyles = makeStyles((theme) => ({
+    root: {
+        width: '100%',
+        maxWidth: 360,
+        backgroundColor: theme.palette.background.paper,
+    },
+    title: {
+        fontWeight: 'normal',
+        lineHeight: '30px',
+        marginBottom: theme.spacing(1.5),
+        [theme.breakpoints.down('sm')]: {
+            marginBottom: 0,
         },
-        title: {
-            fontWeight: 'normal',
-            lineHeight: '30px',
-            marginBottom: theme.spacing(1.5),
-            [theme.breakpoints.down('sm')]: {
-                marginBottom: 0,
-            },
+    },
+    section: {
+        padding: '26px 40px',
+        margin: theme.spacing(3, 0),
+        [theme.breakpoints.down('sm')]: {
+            padding: theme.spacing(2),
         },
-        section: {
-            padding: '26px 40px',
-            margin: theme.spacing(3, 0),
-            [theme.breakpoints.down('sm')]: {
-                padding: theme.spacing(2),
-            },
+    },
+    secondaryAction: {
+        paddingRight: 90,
+    },
+    list: {
+        [theme.breakpoints.down('sm')]: {
+            marginLeft: theme.spacing(-2),
+            marginRight: theme.spacing(-2),
         },
-        secondaryAction: {
-            paddingRight: 90,
+    },
+    listItemRoot: {
+        paddingTop: theme.spacing(1.5),
+        paddingBottom: theme.spacing(1.5),
+        borderBottom: `1px solid ${theme.palette.divider}`,
+    },
+    listItemIcon: {
+        color: theme.palette.text.primary,
+        justifyContent: 'flex-start',
+        minWidth: 'unset',
+        marginLeft: 0,
+        marginRight: theme.spacing(3),
+        [theme.breakpoints.down('sm')]: {
+            display: 'none',
         },
-        list: {
-            [theme.breakpoints.down('sm')]: {
-                marginLeft: theme.spacing(-2),
-                marginRight: theme.spacing(-2),
-            },
-        },
-        listItemRoot: {
-            paddingTop: theme.spacing(1.5),
-            paddingBottom: theme.spacing(1.5),
-            borderBottom: `1px solid ${theme.palette.divider}`,
-        },
-        listItemIcon: {
-            color: theme.palette.text.primary,
-            justifyContent: 'flex-start',
-            minWidth: 'unset',
-            marginLeft: 0,
-            marginRight: theme.spacing(3),
-            [theme.breakpoints.down('sm')]: {
-                display: 'none',
-            },
-        },
-    }),
-)
+    },
+}))
 
 const settingsTheme = extendsTheme((theme) => ({
     wrapper: {
@@ -137,6 +135,7 @@ export default function DashboardSettingsRouter() {
     const langMapper = useRef((x: Language) => {
         if (x === Language.en) return t('language_en')
         if (x === Language.zh) return t('language_zh')
+        if (x === Language.ko) return t('language_ko')
         if (x === Language.ja) return t('language_ja')
         return x
     }).current
@@ -173,6 +172,15 @@ export default function DashboardSettingsRouter() {
                         </Typography>
                         <Card elevation={0}>
                             <List className={classes.list} disablePadding>
+                                {process.env.NODE_ENV === 'development' && (
+                                    <ListItem button onClick={() => (location.href = '/next.html')}>
+                                        <ListItemIcon children={<NewIcon />} />
+                                        <ListItemText
+                                            primary="Open new dashboard (integrated) (dev-only)"
+                                            secondary="/packages/dashboard/"
+                                        />
+                                    </ListItem>
+                                )}
                                 <SettingsUIEnum
                                     classes={listStyle}
                                     enumObject={Language}

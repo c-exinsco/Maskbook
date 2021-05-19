@@ -107,7 +107,8 @@ export function getAllCoins() {
 }
 
 export async function getAllCoinsByKeyword(keyword: string) {
-    if (keyword.toLocaleLowerCase() === 'mask') {
+    const keyword_ = keyword.toLocaleLowerCase()
+    if (keyword_ === 'mask') {
         return [
             {
                 decimals: 18,
@@ -159,14 +160,8 @@ export async function getAllCoinsByKeyword(keyword: string) {
  */
 export async function getCoinInfo(id: string) {
     //#region get timestamps from one hour ago, ,one day ago, a week ago
-    const {
-        utcOneHourBack,
-        utcOneDayBack,
-        utcWeekBack,
-        utcTwoWeekBack,
-        utcOneMonthBack,
-        utcOneYearBack,
-    } = getTimestampForChanges()
+    const { utcOneHourBack, utcOneDayBack, utcWeekBack, utcTwoWeekBack, utcOneMonthBack, utcOneYearBack } =
+        getTimestampForChanges()
     //#endregion
 
     //#region get block from one hour ago, one day ago, a week ago

@@ -1,8 +1,7 @@
 import { useCallback, useEffect } from 'react'
-import { makeStyles, createStyles, Card, Typography, Box } from '@material-ui/core'
+import { makeStyles, Card, Typography, Box } from '@material-ui/core'
 import { Skeleton } from '@material-ui/core'
 import classNames from 'classnames'
-import BigNumber from 'bignumber.js'
 import type { RedPacketJSONPayload } from '../types'
 import { RedPacketStatus } from '../types'
 import { useI18N } from '../../../utils/i18n-next-ui'
@@ -13,124 +12,123 @@ import { resolveRedPacketStatus } from '../pipes'
 import { useRemoteControlledDialog } from '../../../utils/hooks/useRemoteControlledDialog'
 import { WalletMessages } from '../../Wallet/messages'
 import { useAvailabilityComputed } from '../hooks/useAvailabilityComputed'
-import { formatBalance } from '../../Wallet/formatter'
+import { formatBalance } from '@dimensiondev/maskbook-shared'
 import { TransactionStateType } from '../../../web3/hooks/useTransactionState'
-import { useChainId, useChainIdValid } from '../../../web3/hooks/useChainState'
+import { useChainId, useChainIdValid } from '../../../web3/hooks/useBlockNumber'
 import { useAccount } from '../../../web3/hooks/useAccount'
 import ActionButton from '../../../extension/options-page/DashboardComponents/ActionButton'
-import { resolveChainName } from '../../../web3/pipes'
+import { resolveChainId } from '../../../web3/pipes'
 import { usePostLink } from '../../../components/DataSource/usePostInfo'
 import {
     currentIsMetamaskLockedSettings,
     currentSelectedWalletProviderSettings,
 } from '../../../plugins/Wallet/settings'
-import { ProviderType } from '../../../web3/types'
+import { ChainId, ProviderType } from '../../../web3/types'
 import { useValueRef } from '../../../utils/hooks/useValueRef'
 import { MetaMaskIcon } from '../../../resources/MetaMaskIcon'
 import Services from '../../../extension/service'
 import { useTokenDetailed } from '../../../web3/hooks/useTokenDetailed'
 import { EthereumMessages } from '../../Ethereum/messages'
 import { activatedSocialNetworkUI } from '../../../social-network'
+import { EthereumChainBoundary } from '../../../web3/UI/EthereumChainBoundary'
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        root: {
-            borderRadius: theme.spacing(1),
-            padding: theme.spacing(2),
-            background: '#DB0632',
-            position: 'relative',
-            display: 'flex',
-            color: theme.palette.common.white,
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            height: 136,
-            boxSizing: 'border-box',
-        },
-        header: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-        },
-        content: {
-            display: 'flex',
-            flex: 1,
-            flexDirection: 'column',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-        },
-        footer: {
-            paddingTop: theme.spacing(2),
-            display: 'flex',
-            justifyContent: 'center',
-        },
-        from: {
-            flex: '1',
-            textAlign: 'left',
-        },
-        label: {
-            borderRadius: theme.spacing(1),
-            padding: theme.spacing(0.2, 1),
-            background: 'rgba(0, 0, 0, 0.2)',
-            textTransform: 'capitalize',
-        },
-        words: {
-            color: '#FAF2BF',
-        },
-        button: {
-            color: theme.palette.common.white,
-        },
-        packet: {
-            top: 40,
-            right: -10,
-            width: 90,
-            height: 90,
-            position: 'absolute',
-            backgroundAttachment: 'local',
-            backgroundPosition: 'center',
-            backgroundSize: 'contain',
-            backgroundRepeat: 'no-repeat',
-            backgroundImage: `url(${new URL('./present-default.png', import.meta.url)})`,
-        },
-        dai: {
-            backgroundImage: `url(${new URL('./present-dai.png', import.meta.url)})`,
-        },
-        okb: {
-            backgroundImage: `url(${new URL('./present-okb.png', import.meta.url)})`,
-        },
-        text: {
-            padding: theme.spacing(0.5, 2),
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-            boxSizing: 'border-box',
-        },
-        dimmer: {
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        },
-        cursor: {
-            cursor: 'pointer',
-        },
-        loader: {
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-        },
-        icon: {
-            fontSize: 45,
-        },
-        metamaskContent: {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-        },
-    }),
-)
+const useStyles = makeStyles((theme) => ({
+    root: {
+        borderRadius: theme.spacing(1),
+        padding: theme.spacing(2),
+        background: '#DB0632',
+        position: 'relative',
+        display: 'flex',
+        color: theme.palette.common.white,
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        height: 136,
+        boxSizing: 'border-box',
+    },
+    header: {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+    },
+    content: {
+        display: 'flex',
+        flex: 1,
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+    },
+    footer: {
+        paddingTop: theme.spacing(2),
+        display: 'flex',
+        justifyContent: 'center',
+    },
+    from: {
+        flex: '1',
+        textAlign: 'left',
+    },
+    label: {
+        borderRadius: theme.spacing(1),
+        padding: theme.spacing(0.2, 1),
+        background: 'rgba(0, 0, 0, 0.2)',
+        textTransform: 'capitalize',
+    },
+    words: {
+        color: '#FAF2BF',
+    },
+    button: {
+        color: theme.palette.common.white,
+    },
+    packet: {
+        top: 40,
+        right: -10,
+        width: 90,
+        height: 90,
+        position: 'absolute',
+        backgroundAttachment: 'local',
+        backgroundPosition: 'center',
+        backgroundSize: 'contain',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url(${new URL('./present-default.png', import.meta.url)})`,
+    },
+    dai: {
+        backgroundImage: `url(${new URL('./present-dai.png', import.meta.url)})`,
+    },
+    okb: {
+        backgroundImage: `url(${new URL('./present-okb.png', import.meta.url)})`,
+    },
+    text: {
+        padding: theme.spacing(0.5, 2),
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        boxSizing: 'border-box',
+    },
+    dimmer: {
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    },
+    cursor: {
+        cursor: 'pointer',
+    },
+    loader: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        top: 0,
+        bottom: 0,
+    },
+    icon: {
+        fontSize: 45,
+    },
+    metamaskContent: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-around',
+    },
+}))
 
 export interface RedPacketProps {
     payload: RedPacketJSONPayload
@@ -163,12 +161,9 @@ export function RedPacket(props: RedPacketProps) {
     const { canFetch, canClaim, canRefund, listOfStatus } = availabilityComputed
 
     //#region remote controlled select provider dialog
-    const [, setSelectProviderDialogOpen] = useRemoteControlledDialog(WalletMessages.events.selectProviderDialogUpdated)
-    const onConnect = useCallback(() => {
-        setSelectProviderDialogOpen({
-            open: true,
-        })
-    }, [setSelectProviderDialogOpen])
+    const { openDialog: openSelectProviderDialog } = useRemoteControlledDialog(
+        WalletMessages.events.selectProviderDialogUpdated,
+    )
     //#endregion
 
     //#region remote controlled transaction dialog
@@ -190,7 +185,7 @@ export function RedPacket(props: RedPacketProps) {
     const [refundState, refundCallback, resetRefundCallback] = useRefundCallback(account, payload.rpid)
 
     // close the transaction dialog
-    const [_, setTransactionDialogOpen] = useRemoteControlledDialog(
+    const { setDialog: setTransactionDialog } = useRemoteControlledDialog(
         EthereumMessages.events.transactionDialogUpdated,
         (ev) => {
             if (ev.open) return
@@ -205,18 +200,16 @@ export function RedPacket(props: RedPacketProps) {
         const state = canClaim ? claimState : refundState
         if (state.type === TransactionStateType.UNKNOWN) return
         if (!availability || !tokenDetailed) return
-        setTransactionDialogOpen({
+        setTransactionDialog({
             open: true,
             shareLink,
             state,
             summary: canClaim
                 ? `Claiming red packet from ${payload.sender.name}`
                 : canRefund
-                ? `Refunding red packet for ${formatBalance(
-                      new BigNumber(availability.balance),
-                      tokenDetailed.decimals ?? 0,
-                      tokenDetailed.decimals ?? 0,
-                  )} ${tokenDetailed.symbol}`
+                ? `Refunding red packet for ${formatBalance(availability.balance, tokenDetailed.decimals)} ${
+                      tokenDetailed.symbol
+                  }`
                 : '',
         })
     }, [claimState, refundState /* update tx dialog only if state changed */])
@@ -258,11 +251,8 @@ export function RedPacket(props: RedPacketProps) {
             </Card>
         )
 
-    // the chain id is not available
-    if (!canFetch && payload.network) return <Typography>Not available on {resolveChainName(chainId)}.</Typography>
-
     return (
-        <>
+        <EthereumChainBoundary chainId={resolveChainId(payload.network ?? '') ?? ChainId.Mainnet}>
             <Card className={classNames(classes.root)} component="article" elevation={0}>
                 <div className={classes.header}>
                     <Typography className={classes.from} variant="body1" color="inherit">
@@ -283,11 +273,7 @@ export function RedPacket(props: RedPacketProps) {
                         {(() => {
                             if (listOfStatus.includes(RedPacketStatus.expired) && canRefund)
                                 return t('plugin_red_packet_description_refund', {
-                                    balance: formatBalance(
-                                        new BigNumber(availability.balance),
-                                        tokenDetailed.decimals ?? 0,
-                                        tokenDetailed.decimals ?? 0,
-                                    ),
+                                    balance: formatBalance(availability.balance, tokenDetailed.decimals),
                                     symbol: tokenDetailed.symbol,
                                 })
                             if (listOfStatus.includes(RedPacketStatus.claimed))
@@ -300,11 +286,7 @@ export function RedPacket(props: RedPacketProps) {
                                 return t('plugin_red_packet_description_empty')
                             if (!payload.password) return t('plugin_red_packet_description_broken')
                             return t('plugin_red_packet_description_failover', {
-                                total: formatBalance(
-                                    new BigNumber(payload.total),
-                                    tokenDetailed.decimals ?? 0,
-                                    tokenDetailed.decimals ?? 0,
-                                ),
+                                total: formatBalance(payload.total, tokenDetailed.decimals),
                                 symbol: tokenDetailed.symbol,
                                 name: payload.sender.name ?? '-',
                                 shares: payload.shares ?? '-',
@@ -327,7 +309,7 @@ export function RedPacket(props: RedPacketProps) {
             {canClaim || canRefund ? (
                 <Box className={classes.footer}>
                     {!account ? (
-                        <ActionButton variant="contained" size="large" onClick={onConnect}>
+                        <ActionButton variant="contained" size="large" onClick={openSelectProviderDialog}>
                             {t('plugin_wallet_connect_a_wallet')}
                         </ActionButton>
                     ) : !chainIdValid ? (
@@ -341,6 +323,6 @@ export function RedPacket(props: RedPacketProps) {
                     )}
                 </Box>
             ) : null}
-        </>
+        </EthereumChainBoundary>
     )
 }

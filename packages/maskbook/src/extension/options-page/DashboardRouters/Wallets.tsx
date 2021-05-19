@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react'
 import { Button } from '@material-ui/core'
-import { makeStyles, createStyles, ThemeProvider } from '@material-ui/core/styles'
+import { makeStyles, ThemeProvider } from '@material-ui/core/styles'
 import AddIcon from '@material-ui/icons/Add'
 import AddCircleIcon from '@material-ui/icons/AddCircle'
 import RestoreIcon from '@material-ui/icons/Restore'
@@ -20,8 +20,6 @@ import { useWallet } from '../../../plugins/Wallet/hooks/useWallet'
 import { WalletContent } from '../DashboardComponents/WalletContent'
 import { EthereumStatusBar } from '../../../web3/UI/EthereumStatusBar'
 import { extendsTheme } from '../../../utils/theme'
-import { useRemoteControlledDialog } from '../../../utils/hooks/useRemoteControlledDialog'
-import { WalletMessages } from '../../../plugins/Wallet/messages'
 
 //#region theme
 const walletsTheme = extendsTheme((theme) => ({
@@ -44,44 +42,40 @@ const walletsTheme = extendsTheme((theme) => ({
         },
         MuiListItemSecondaryAction: {
             styleOverrides: {
-                root: {
-                    ...theme.typography.body1,
-                },
+                root: theme.typography.body1,
             },
         },
     },
 }))
 //#endregion
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        root: {
-            display: 'flex',
-            flexDirection: 'column',
-            flex: '0 0 100%',
-            height: '100%',
-        },
-        content: {
-            width: '100%',
-            overflow: 'auto',
-            flex: '1 1 auto',
-            display: 'flex',
-            flexDirection: 'column',
-        },
-        wrapper: {
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-        },
-        caption: {
-            display: 'flex',
-            alignItems: 'center',
-        },
-        title: {
-            marginLeft: theme.spacing(1),
-        },
-    }),
-)
+const useStyles = makeStyles((theme) => ({
+    root: {
+        display: 'flex',
+        flexDirection: 'column',
+        flex: '0 0 100%',
+        height: '100%',
+    },
+    content: {
+        width: '100%',
+        overflow: 'auto',
+        flex: '1 1 auto',
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    wrapper: {
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+    },
+    caption: {
+        display: 'flex',
+        alignItems: 'center',
+    },
+    title: {
+        marginLeft: theme.spacing(1),
+    },
+}))
 
 export default function DashboardWalletsRouter() {
     const { t } = useI18N()
@@ -96,15 +90,8 @@ export default function DashboardWalletsRouter() {
 
     const selectedWallet = useWallet()
 
-    //#region create or import wallet
-    const [, setOpenCreateWalletDialog] = useRemoteControlledDialog(WalletMessages.events.createWalletDialogUpdated)
-
-    const onCreate = useCallback(() => setOpenCreateWalletDialog({ open: true }), [])
+    //#region import wallet
     const onImport = useCallback(() => openWalletImport(), [])
-
-    const onCreateOrImportWallet = useCallback(() => {
-        onImport()
-    }, [onImport])
     //#endregion
 
     //#region open dialogs externally
@@ -160,11 +147,7 @@ export default function DashboardWalletsRouter() {
             title={t('my_wallets')}
             actions={[
                 <EthereumStatusBar disableEther BoxProps={{ sx: { justifyContent: 'flex-end' } }} />,
-                <Button
-                    variant="contained"
-                    onClick={onCreateOrImportWallet}
-                    endIcon={<AddCircleIcon />}
-                    data-testid="create_button">
+                <Button variant="contained" onClick={onImport} endIcon={<AddCircleIcon />} data-testid="create_button">
                     {t('plugin_wallet_on_create')}
                 </Button>,
             ]}

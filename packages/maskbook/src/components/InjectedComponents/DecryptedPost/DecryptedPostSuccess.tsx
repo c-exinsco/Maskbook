@@ -2,7 +2,7 @@ import { memo, useRef, useEffect } from 'react'
 import { AdditionalContent, AdditionalContentProps } from '../AdditionalPostContent'
 import { useShareMenu } from '../SelectPeopleDialog'
 import { useI18N } from '../../../utils/i18n-next-ui'
-import { makeStyles, createStyles } from '@material-ui/core/styles'
+import { makeStyles } from '@material-ui/core/styles'
 import { Link } from '@material-ui/core'
 import type { Profile } from '../../../database'
 import { useStylesExtends } from '../../custom-ui-helper'
@@ -13,7 +13,9 @@ import { usePostInfo } from '../../DataSource/usePostInfo'
 import type { ProfileIdentifier } from '../../../database/type'
 import { wrapAuthorDifferentMessage } from './authorDifferentMessage'
 import { ErrorBoundary } from '../../shared/ErrorBoundary'
+import { createInjectHooksRenderer, useActivatedPluginsSNSAdaptor } from '@dimensiondev/mask-plugin-infra'
 
+const PluginRenderer = createInjectHooksRenderer(useActivatedPluginsSNSAdaptor, (x) => x.DecryptedInspector)
 export interface DecryptPostSuccessProps extends withClasses<never> {
     data: { content: TypedMessage }
     requestAppendRecipients?(to: Profile[]): Promise<void>
@@ -28,12 +30,12 @@ export interface DecryptPostSuccessProps extends withClasses<never> {
 }
 
 const useSuccessStyles = makeStyles((theme) => {
-    return createStyles({
+    return {
         header: { display: 'flex', alignItems: 'center' },
         addRecipientsLink: { cursor: 'pointer', marginLeft: theme.spacing(1) },
         signatureVerifyPassed: { display: 'flex' },
         signatureVerifyFailed: { display: 'flex' },
-    })
+    }
 })
 
 export const DecryptPostSuccess = memo(function DecryptPostSuccess(props: DecryptPostSuccessProps) {
@@ -71,16 +73,17 @@ export const DecryptPostSuccess = memo(function DecryptPostSuccess(props: Decryp
 function SuccessDecryptionPlugin(props: PluginSuccessDecryptionComponentProps) {
     return (
         <>
+            <PluginRenderer message={props.message} />
             {[...PluginUI.values()].map((x) => (
                 <ErrorBoundary subject={`Plugin "${x.pluginName}"`} key={x.identifier}>
-                    <PluginSuccessDecryptionPostInspectorForEach pluginConfig={x} {...props} />
+                    <OldPluginSuccessDecryptionPostInspectorForEach pluginConfig={x} {...props} />
                 </ErrorBoundary>
             ))}
         </>
     )
 }
 
-function PluginSuccessDecryptionPostInspectorForEach(props: { pluginConfig: PluginConfig; message: TypedMessage }) {
+function OldPluginSuccessDecryptionPostInspectorForEach(props: { pluginConfig: PluginConfig; message: TypedMessage }) {
     const { pluginConfig, message } = props
     const ref = useRef<HTMLDivElement | null>(null)
     const F = pluginConfig.successDecryptionInspector

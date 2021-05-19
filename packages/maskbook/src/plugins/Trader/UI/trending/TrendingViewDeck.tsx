@@ -1,28 +1,14 @@
 import { useCallback } from 'react'
-import {
-    Avatar,
-    Button,
-    CardActions,
-    CardContent,
-    CardHeader,
-    createStyles,
-    IconButton,
-    Link,
-    makeStyles,
-    Paper,
-    Typography,
-} from '@material-ui/core'
+import { Avatar, Button, CardContent, CardHeader, IconButton, makeStyles, Paper, Typography } from '@material-ui/core'
 import MonetizationOnOutlinedIcon from '@material-ui/icons/MonetizationOnOutlined'
 import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown'
 import stringify from 'json-stable-stringify'
-import { findIndex, first, last } from 'lodash-es'
+import { first, last } from 'lodash-es'
 import { Coin, Currency, DataProvider, Stat, TradeProvider, Trending } from '../../types'
-import { resolveDataProviderName, resolveTradeProviderName } from '../../pipes'
-import { formatCurrency } from '../../../Wallet/formatter'
+import { FormattedCurrency } from '@dimensiondev/maskbook-shared'
 import { PriceChanged } from './PriceChanged'
 import { Linking } from './Linking'
 import { useI18N } from '../../../../utils/i18n-next-ui'
-import { MaskbookTextIcon } from '../../../../resources/MaskbookIcon'
 import { TrendingCard, TrendingCardProps } from './TrendingCard'
 import { useRemoteControlledDialog } from '../../../../utils/hooks/useRemoteControlledDialog'
 import { PluginTransakMessages } from '../../../Transak/messages'
@@ -30,10 +16,8 @@ import { useAccount } from '../../../../web3/hooks/useAccount'
 import { Flags } from '../../../../utils/flags'
 import { TokenIcon } from '../../../../extension/options-page/DashboardComponents/TokenIcon'
 import { useStylesExtends } from '../../../../components/custom-ui-helper'
-import { FootnoteMenu, FootnoteMenuOption } from '../trader/FootnoteMenu'
-import { getEnumAsArray } from '../../../../utils/enum'
-import { TradeProviderIcon } from '../trader/TradeProviderIcon'
-import { DataProviderIcon } from '../trader/DataProviderIcon'
+import type { FootnoteMenuOption } from '../trader/FootnoteMenu'
+import { TradeFooter } from '../trader/TradeFooter'
 import {
     currentTrendingDataProviderSettings,
     currentTradeProviderSettings,
@@ -46,7 +30,7 @@ import { useApprovedTokens } from '../../trending/useApprovedTokens'
 import { CoinSaftyAlert } from './CoinSaftyAlert'
 
 const useStyles = makeStyles((theme) => {
-    return createStyles({
+    return {
         root: {
             width: '100%',
             boxShadow: 'none',
@@ -65,9 +49,6 @@ const useStyles = makeStyles((theme) => {
             position: 'relative',
         },
         body: {},
-        footer: {
-            justifyContent: 'space-between',
-        },
         headline: {
             display: 'flex',
             alignItems: 'center',
@@ -103,27 +84,6 @@ const useStyles = makeStyles((theme) => {
             fontWeight: 300,
             marginRight: theme.spacing(1),
         },
-        footnote: {
-            color: theme.palette.text.secondary,
-            fontSize: 10,
-            marginRight: theme.spacing(0.5),
-        },
-        footLink: {
-            cursor: 'pointer',
-            marginRight: theme.spacing(0.5),
-            '&:last-child': {
-                marginRight: 0,
-            },
-        },
-        footMenu: {
-            color: theme.palette.text.secondary,
-            fontSize: 10,
-            display: 'flex',
-            alignItems: 'center',
-        },
-        footName: {
-            marginLeft: theme.spacing(0.5),
-        },
         avatar: {
             backgroundColor: theme.palette.common.white,
         },
@@ -135,7 +95,7 @@ const useStyles = makeStyles((theme) => {
             width: 40,
             height: 10,
         },
-    })
+    }
 })
 
 export interface TrendingViewDeckProps extends withClasses<'header' | 'body' | 'footer' | 'content'> {
@@ -149,6 +109,8 @@ export interface TrendingViewDeckProps extends withClasses<'header' | 'body' | '
     showDataProviderIcon?: boolean
     showTradeProviderIcon?: boolean
     TrendingCardProps?: Partial<TrendingCardProps>
+    dataProviders: DataProvider[]
+    tradeProviders: TradeProvider[]
 }
 
 export function TrendingViewDeck(props: TrendingViewDeckProps) {
@@ -163,6 +125,8 @@ export function TrendingViewDeck(props: TrendingViewDeckProps) {
         showDataProviderIcon = false,
         showTradeProviderIcon = false,
         TrendingCardProps,
+        dataProviders = [],
+        tradeProviders = [],
     } = props
     const { coin, market } = trending
 
@@ -172,10 +136,10 @@ export function TrendingViewDeck(props: TrendingViewDeckProps) {
     //#region buy
     const account = useAccount()
     const isAllowanceCoin = useTransakAllowanceCoin(coin)
-    const [, setBuyDialogOpen] = useRemoteControlledDialog(PluginTransakMessages.events.buyTokenDialogUpdated)
+    const { setDialog: setBuyDialog } = useRemoteControlledDialog(PluginTransakMessages.events.buyTokenDialogUpdated)
 
     const onBuyButtonClicked = useCallback(() => {
-        setBuyDialogOpen({
+        setBuyDialog({
             open: true,
             code: coin.symbol,
             address: account,
@@ -204,8 +168,6 @@ export function TrendingViewDeck(props: TrendingViewDeckProps) {
     )
     //#endregion
 
-    const dataProviderOptions = getEnumAsArray(DataProvider)
-    const tradeProviderOptions = getEnumAsArray(TradeProvider)
     const { approvedTokens, onApprove } = useApprovedTokens(trending.coin.eth_address)
     return (
         <TrendingCard {...TrendingCardProps}>
@@ -271,12 +233,14 @@ export function TrendingViewDeck(props: TrendingViewDeckProps) {
                                         </span>
                                     ) : null}
                                     <span>
-                                        {formatCurrency(
-                                            (dataProvider === DataProvider.COIN_MARKET_CAP
-                                                ? last(stats)?.[1] ?? market.current_price
-                                                : market.current_price) ?? 0,
-                                            currency.symbol,
-                                        )}
+                                        <FormattedCurrency
+                                            value={
+                                                (dataProvider === DataProvider.COIN_MARKET_CAP
+                                                    ? last(stats)?.[1] ?? market.current_price
+                                                    : market.current_price) ?? 0
+                                            }
+                                            sign={currency.symbol}
+                                        />
                                     </span>
                                 </>
                             ) : (
@@ -297,58 +261,19 @@ export function TrendingViewDeck(props: TrendingViewDeckProps) {
                 </Paper>
             </CardContent>
 
-            <CardActions className={classes.footer}>
-                <Typography className={classes.footnote} variant="subtitle2">
-                    <span>Powered by </span>
-                    <Link
-                        className={classes.footLink}
-                        color="textSecondary"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Mask"
-                        href="https://mask.io">
-                        <MaskbookTextIcon classes={{ root: classes.maskbook }} viewBox="0 0 80 20" />
-                    </Link>
-                </Typography>
-                {showDataProviderIcon ? (
-                    <div className={classes.footMenu}>
-                        <Typography className={classes.footnote}>Data Source</Typography>
-                        <FootnoteMenu
-                            options={dataProviderOptions.map((x) => ({
-                                name: (
-                                    <>
-                                        <DataProviderIcon provider={x.value} />
-                                        <span className={classes.footName}>{resolveDataProviderName(x.value)}</span>
-                                    </>
-                                ),
-                                value: x.value,
-                            }))}
-                            selectedIndex={findIndex(dataProviderOptions, (x) => x.value === dataProvider)}
-                            onChange={onDataProviderChange}
-                        />
-                        <ArrowDropDownIcon />
-                    </div>
-                ) : null}
-                {showTradeProviderIcon ? (
-                    <div className={classes.footMenu}>
-                        <Typography className={classes.footnote}>Supported by</Typography>
-                        <FootnoteMenu
-                            options={tradeProviderOptions.map((x) => ({
-                                name: (
-                                    <>
-                                        <TradeProviderIcon provider={x.value} />
-                                        <span className={classes.footName}>{resolveTradeProviderName(x.value)}</span>
-                                    </>
-                                ),
-                                value: x.value,
-                            }))}
-                            selectedIndex={findIndex(getEnumAsArray(TradeProvider), (x) => x.value === tradeProvider)}
-                            onChange={onTradeProviderChange}>
-                            <ArrowDropDownIcon />
-                        </FootnoteMenu>
-                    </div>
-                ) : null}
-            </CardActions>
+            <TradeFooter
+                classes={{
+                    footer: classes.footer,
+                }}
+                showDataProviderIcon={showDataProviderIcon}
+                showTradeProviderIcon={showTradeProviderIcon}
+                dataProvider={dataProvider}
+                tradeProvider={tradeProvider}
+                dataProviders={dataProviders}
+                tradeProviders={tradeProviders}
+                onDataProviderChange={onDataProviderChange}
+                onTradeProviderChange={onTradeProviderChange}
+            />
         </TrendingCard>
     )
 }

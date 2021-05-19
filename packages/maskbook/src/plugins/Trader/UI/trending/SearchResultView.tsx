@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { makeStyles, createStyles, Link, Tab, Tabs } from '@material-ui/core'
+import { makeStyles, Link, Tab, Tabs } from '@material-ui/core'
 import { DataProvider, TagType, TradeProvider } from '../../types'
 import { resolveDataProviderName, resolveDataProviderLink } from '../../pipes'
 import { useTrendingById, useTrendingByKeyword } from '../../trending/useTrending'
@@ -11,11 +11,13 @@ import { Days, PriceChartDaysControl } from './PriceChartDaysControl'
 import { useCurrentDataProvider } from '../../trending/useCurrentDataProvider'
 import { useCurrentTradeProvider } from '../../trending/useCurrentTradeProvider'
 import { useI18N } from '../../../../utils/i18n-next-ui'
+import { useSettingsSwticher } from '../../../../utils/hooks/useSettingSwitcher'
 import { TradeView } from '../trader/TradeView'
 import { CoinMarketPanel } from './CoinMarketPanel'
 import { TrendingViewError } from './TrendingViewError'
 import { TrendingViewSkeleton } from './TrendingViewSkeleton'
 import { TrendingViewDeck } from './TrendingViewDeck'
+import { currentTrendingDataProviderSettings } from '../../settings'
 import { useAvailableCoins } from '../../trending/useAvailableCoins'
 import { usePreferredCoinId } from '../../trending/useCurrentCoinId'
 import { EthereumTokenType } from '../../../../web3/types'
@@ -24,11 +26,11 @@ import { TradeContext, useTradeContext } from '../../trader/useTradeContext'
 import { LBPPanel } from './LBPPanel'
 import { useLBP } from '../../LBP/useLBP'
 import { createERC20Token } from '../../../../web3/helpers'
-import { useChainId } from '../../../../web3/hooks/useChainState'
+import { useChainId } from '../../../../web3/hooks/useBlockNumber'
 import { Flags } from '../../../../utils/flags'
 
 const useStyles = makeStyles((theme) => {
-    return createStyles({
+    return {
         root: {
             width: '100%',
             boxShadow: 'none',
@@ -61,7 +63,7 @@ const useStyles = makeStyles((theme) => {
             minHeight: 'unset',
             minWidth: 'unset',
         },
-    })
+    }
 })
 
 export interface SearchResultViewProps {
@@ -99,7 +101,11 @@ export function SearchResultView(props: SearchResultViewProps) {
     //#endregion
 
     //#region swap
-    const { value: tokenDetailed, error: tokenDetailedError, loading: loadingTokenDetailed } = useTokenDetailed(
+    const {
+        value: tokenDetailed,
+        error: tokenDetailedError,
+        loading: loadingTokenDetailed,
+    } = useTokenDetailed(
         trending?.coin.symbol.toLowerCase() === 'eth' ? EthereumTokenType.Ether : EthereumTokenType.ERC20,
         trending?.coin.symbol.toLowerCase() === 'eth' ? '' : trending?.coin.eth_address ?? '',
     )
@@ -108,7 +114,11 @@ export function SearchResultView(props: SearchResultViewProps) {
 
     //#region stats
     const [days, setDays] = useState(Days.ONE_WEEK)
-    const { value: stats = [], loading: loadingStats, retry: retryStats } = usePriceStats({
+    const {
+        value: stats = [],
+        loading: loadingStats,
+        retry: retryStats,
+    } = usePriceStats({
         coinId: trending?.coin.id,
         dataProvider: trending?.dataProvider,
         currency: trending?.currency,
@@ -122,6 +132,14 @@ export function SearchResultView(props: SearchResultViewProps) {
 
     //#region trader context
     const tradeContext = useTradeContext(tradeProvider)
+    //#endregion
+
+    //#region current data provider switcher
+    const DataProviderSwitcher = useSettingsSwticher(
+        currentTrendingDataProviderSettings,
+        dataProviders,
+        resolveDataProviderName,
+    )
     //#endregion
 
     //#region no available providers
@@ -146,6 +164,7 @@ export function SearchResultView(props: SearchResultViewProps) {
                         .
                     </span>
                 }
+                reaction={DataProviderSwitcher}
                 TrendingCardProps={{ classes: { root: classes.root } }}
             />
         )
@@ -190,9 +209,12 @@ export function SearchResultView(props: SearchResultViewProps) {
                 tradeProvider={tradeProvider}
                 showDataProviderIcon={tabIndex < 3}
                 showTradeProviderIcon={tabIndex === 3}
-                TrendingCardProps={{ classes: { root: classes.root } }}>
+                TrendingCardProps={{ classes: { root: classes.root } }}
+                dataProviders={dataProviders}
+                tradeProviders={tradeProviders}>
                 <Tabs
                     className={classes.tabs}
+                    indicatorColor="primary"
                     textColor="primary"
                     variant="fullWidth"
                     value={tabIndex}

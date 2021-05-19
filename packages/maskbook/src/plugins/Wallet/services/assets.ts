@@ -9,7 +9,7 @@ import { CurrencyType } from '../../../web3/types'
 import { ChainId, EthereumTokenType } from '../../../web3/types'
 import { unreachable } from '../../../utils/utils'
 import { createERC1155Token, createERC721Token, createEtherToken, getConstant } from '../../../web3/helpers'
-import { formatChecksumAddress } from '../formatter'
+import { formatEthereumAddress } from '@dimensiondev/maskbook-shared'
 import { CONSTANTS } from '../../../web3/constants'
 
 export async function getAssetsListNFT(
@@ -21,44 +21,50 @@ export async function getAssetsListNFT(
 ) {
     if (provider === CollectibleProvider.OPENSEAN) {
         const { assets } = await OpenSeaAPI.getAssetsList(address, { chainId, page, size })
-        return assets
-            .filter((x) => ['ERC721', 'ERC1155'].includes(x.asset_contract.schema_name))
-            .map((x) => {
-                switch (x.asset_contract.schema_name) {
-                    case 'ERC721':
-                        return createERC721Token(
-                            ChainId.Mainnet,
-                            x.token_id,
-                            x.asset_contract.address,
-                            x.asset_contract.name,
-                            x.asset_contract.symbol,
-                            '',
-                            '',
-                            {
-                                name: x.name,
-                                description: x.description,
-                                image: x.image_url ?? x.image_preview_url ?? '',
-                            },
-                        )
-                    case 'ERC1155':
-                        return createERC1155Token(
-                            ChainId.Mainnet,
-                            x.token_id,
-                            x.asset_contract.address,
-                            x.asset_contract.name,
-                            '',
-                            {
-                                name: x.name,
-                                description: x.description,
-                                image: x.image_url ?? x.image_preview_url ?? '',
-                            },
-                        )
-                    default:
-                        unreachable(x.asset_contract.schema_name)
-                }
-            })
+        return {
+            assets: assets
+                .filter((x) => ['ERC721', 'ERC1155'].includes(x.asset_contract.schema_name))
+                .map((x) => {
+                    switch (x.asset_contract.schema_name) {
+                        case 'ERC721':
+                            return createERC721Token(
+                                ChainId.Mainnet,
+                                x.token_id,
+                                x.asset_contract.address,
+                                x.asset_contract.name,
+                                x.asset_contract.symbol,
+                                '',
+                                '',
+                                {
+                                    name: x.name,
+                                    description: x.description,
+                                    image: x.image_url ?? x.image_preview_url ?? '',
+                                },
+                            )
+                        case 'ERC1155':
+                            return createERC1155Token(
+                                ChainId.Mainnet,
+                                x.token_id,
+                                x.asset_contract.address,
+                                x.asset_contract.name,
+                                '',
+                                {
+                                    name: x.name,
+                                    description: x.description,
+                                    image: x.image_url ?? x.image_preview_url ?? '',
+                                },
+                            )
+                        default:
+                            unreachable(x.asset_contract.schema_name)
+                    }
+                }),
+            hasNextPage: assets.length === 50,
+        }
     }
-    return []
+    return {
+        assets: [],
+        hasNextPage: false,
+    }
 }
 
 export async function getAssetsList(address: string, chainId: ChainId, provider: PortfolioProvider): Promise<Asset[]> {
@@ -90,7 +96,7 @@ function formatAssetsFromDebank(data: BalanceRecord[]) {
                     : {
                           // distinguish token type
                           type: EthereumTokenType.ERC20,
-                          address: formatChecksumAddress(x.id),
+                          address: formatEthereumAddress(x.id),
                           chainId: ChainId.Mainnet,
                           name: x.name,
                           symbol: x.symbol,

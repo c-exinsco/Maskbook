@@ -1,6 +1,6 @@
 import { forwardRef, useCallback, useMemo, useState } from 'react'
 import { Alert, Box, Button, IconButton, MenuItem, Tab, Tabs } from '@material-ui/core'
-import { createStyles, makeStyles } from '@material-ui/core/styles'
+import { makeStyles } from '@material-ui/core/styles'
 import AddIcon from '@material-ui/icons/Add'
 import MonetizationOnOutlinedIcon from '@material-ui/icons/MonetizationOnOutlined'
 import MoreVertOutlinedIcon from '@material-ui/icons/MoreVertOutlined'
@@ -23,7 +23,7 @@ import { WalletAssetsTable } from './WalletAssetsTable'
 import { useRemoteControlledDialog } from '../../../utils/hooks/useRemoteControlledDialog'
 import { PluginTransakMessages } from '../../../plugins/Transak/messages'
 import { Flags } from '../../../utils/flags'
-import { useChainIdValid } from '../../../web3/hooks/useChainState'
+import { useChainIdValid } from '../../../web3/hooks/useBlockNumber'
 import { TransactionList } from './TransactionList'
 import { CollectibleList } from './CollectibleList'
 import { useHistory, useLocation } from 'react-router'
@@ -31,51 +31,49 @@ import { DashboardWalletRoute } from '../Route'
 import { useAccount } from '../../../web3/hooks/useAccount'
 import { FilterTransactionType } from '../../../plugins/Wallet/types'
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        root: {
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            '&> *': {
-                flex: '0 0 auto',
-                overflow: 'auto',
-            },
+const useStyles = makeStyles((theme) => ({
+    root: {
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        '&> *': {
+            flex: '0 0 auto',
+            overflow: 'auto',
         },
-        alert: {
-            marginTop: theme.spacing(2),
-        },
-        caption: {
-            padding: theme.spacing(2, 0),
-        },
-        header: {
-            borderBottom: `1px solid ${theme.palette.divider}`,
-        },
-        content: {
-            flex: 1,
-        },
-        footer: {
-            margin: theme.spacing(1),
-        },
-        title: {
-            flex: 1,
-            paddingLeft: theme.spacing(1),
-        },
-        tabs: {},
-        addButton: {
-            color: theme.palette.primary.main,
-        },
-        moreButton: {
-            color: theme.palette.text.primary,
-        },
-        assetsTable: {
-            flex: 1,
-        },
-        checkIcon: {
-            marginLeft: theme.spacing(1),
-        },
-    }),
-)
+    },
+    alert: {
+        marginTop: theme.spacing(2),
+    },
+    caption: {
+        padding: theme.spacing(1.5, 0),
+    },
+    header: {
+        borderBottom: `1px solid ${theme.palette.divider}`,
+    },
+    content: {
+        flex: 1,
+    },
+    footer: {
+        margin: theme.spacing(1),
+    },
+    title: {
+        flex: 1,
+        paddingLeft: theme.spacing(1),
+    },
+    tabs: {},
+    addButton: {
+        color: theme.palette.primary.main,
+    },
+    moreButton: {
+        color: theme.palette.text.primary,
+    },
+    assetsTable: {
+        flex: 1,
+    },
+    checkIcon: {
+        marginLeft: theme.spacing(1),
+    },
+}))
 
 interface WalletContentProps {
     wallet: WalletRecord
@@ -141,7 +139,7 @@ export const WalletContent = forwardRef<HTMLDivElement, WalletContentProps>(({ w
     ])
 
     //#region remote controlled buy dialog
-    const [, setBuyDialogOpen] = useRemoteControlledDialog(PluginTransakMessages.events.buyTokenDialogUpdated)
+    const { setDialog: setBuyDialog } = useRemoteControlledDialog(PluginTransakMessages.events.buyTokenDialogUpdated)
     //#endregion
 
     //#region tab
@@ -260,7 +258,7 @@ export const WalletContent = forwardRef<HTMLDivElement, WalletContentProps>(({ w
                     {!xsMatched && Flags.transak_enabled ? (
                         <Button
                             onClick={() => {
-                                setBuyDialogOpen({
+                                setBuyDialog({
                                     open: true,
                                     address: wallet.address,
                                 })

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { makeStyles, createStyles, Link, Tab, Tabs } from '@material-ui/core'
+import { makeStyles, Link, Tab, Tabs } from '@material-ui/core'
 import { DataProvider, TagType, TradeProvider } from '../../types'
 import { resolveDataProviderName, resolveDataProviderLink } from '../../pipes'
 import { useTrendingById, useTrendingByKeyword } from '../../trending/useTrending'
@@ -24,11 +24,11 @@ import { TradeContext, useTradeContext } from '../../trader/useTradeContext'
 import { LBPPanel } from './LBPPanel'
 import { createERC20Token } from '../../../../web3/helpers'
 import { useLBP } from '../../LBP/useLBP'
-import { useChainId } from '../../../../web3/hooks/useChainState'
+import { useChainId } from '../../../../web3/hooks/useBlockNumber'
 import { Flags } from '../../../../utils/flags'
 
 const useStyles = makeStyles((theme) => {
-    return createStyles({
+    return {
         root: {},
         header: {},
         body: {
@@ -55,7 +55,7 @@ const useStyles = makeStyles((theme) => {
         priceChartRoot: {
             flex: 1,
         },
-    })
+    }
 })
 
 export interface PopperViewProps {
@@ -95,7 +95,11 @@ export function PopperView(props: PopperViewProps) {
     //#endregion
 
     //#region swap
-    const { value: tokenDetailed, error: tokenDetailedError, loading: loadingTokenDetailed } = useTokenDetailed(
+    const {
+        value: tokenDetailed,
+        error: tokenDetailedError,
+        loading: loadingTokenDetailed,
+    } = useTokenDetailed(
         trending?.coin.symbol.toLowerCase() === 'eth' ? EthereumTokenType.Ether : EthereumTokenType.ERC20,
         trending?.coin.symbol.toLowerCase() === 'eth' ? '' : trending?.coin.eth_address ?? '',
     )
@@ -104,7 +108,11 @@ export function PopperView(props: PopperViewProps) {
 
     //#region stats
     const [days, setDays] = useState(Days.ONE_WEEK)
-    const { value: stats = [], loading: loadingStats, retry: retryStats } = usePriceStats({
+    const {
+        value: stats = [],
+        loading: loadingStats,
+        retry: retryStats,
+    } = usePriceStats({
         coinId: trending?.coin.id,
         dataProvider: trending?.dataProvider,
         currency: trending?.currency,
@@ -181,9 +189,12 @@ export function PopperView(props: PopperViewProps) {
                 dataProvider={dataProvider}
                 tradeProvider={tradeProvider}
                 showDataProviderIcon={tabIndex < 3}
-                showTradeProviderIcon={tabIndex === 3}>
+                showTradeProviderIcon={tabIndex === 3}
+                dataProviders={dataProviders}
+                tradeProviders={tradeProviders}>
                 <Tabs
                     className={classes.tabs}
+                    indicatorColor="primary"
                     textColor="primary"
                     variant="fullWidth"
                     value={tabIndex}

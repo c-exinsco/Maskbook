@@ -11,7 +11,7 @@ import type { ERC20TokenDetailed, EtherTokenDetailed } from '../../../web3/types
 import { useRemoteControlledDialog } from '../../../utils/hooks/useRemoteControlledDialog'
 import { PluginTransakMessages } from '../../../plugins/Transak/messages'
 import { useAccount } from '../../../web3/hooks/useAccount'
-import { useChainIdValid } from '../../../web3/hooks/useChainState'
+import { useChainIdValid } from '../../../web3/hooks/useBlockNumber'
 
 const useStyles = makeStyles((theme) => ({
     more: {
@@ -35,7 +35,7 @@ export function ActionsBarFT(props: ActionsBarFT_Props) {
     const chainIdValid = useChainIdValid()
 
     //#region remote controlled buy dialog
-    const [, setBuyDialogOpen] = useRemoteControlledDialog(PluginTransakMessages.events.buyTokenDialogUpdated)
+    const { setDialog: setBuyDialog } = useRemoteControlledDialog(PluginTransakMessages.events.buyTokenDialogUpdated)
     //#endregion
 
     const [transeferDialog, , openTransferDialogOpen] = useModal(DashboardWalletTransferDialogFT)
@@ -44,7 +44,7 @@ export function ActionsBarFT(props: ActionsBarFT_Props) {
         [
             <MenuItem
                 onClick={() => {
-                    setBuyDialogOpen({
+                    setBuyDialog({
                         open: true,
                         code: token.symbol ?? token.name,
                         address: account,

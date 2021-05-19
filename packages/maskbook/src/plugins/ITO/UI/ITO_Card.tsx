@@ -1,6 +1,5 @@
-import { Alert, Typography, Skeleton, Box, createStyles } from '@material-ui/core'
+import { Alert, Typography, Skeleton, Box } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
-import BigNumber from 'bignumber.js'
 import { useCallback, useEffect } from 'react'
 import { useStylesExtends } from '../../../components/custom-ui-helper'
 import { usePostLink } from '../../../components/DataSource/usePostInfo'
@@ -11,47 +10,45 @@ import { useRemoteControlledDialog } from '../../../utils/hooks/useRemoteControl
 import { TransactionStateType } from '../../../web3/hooks/useTransactionState'
 import type { ERC20TokenDetailed } from '../../../web3/types'
 import { EthereumMessages } from '../../Ethereum/messages'
-import { formatBalance } from '../../Wallet/formatter'
-import { useClaimCallback } from '../hooks/useClaimCallback'
+import { formatBalance } from '@dimensiondev/maskbook-shared'
+import { useMaskClaimCallback } from '../hooks/useMaskClaimCallback'
 import { useMaskITO_Packet } from '../hooks/useMaskITO_Packet'
 
-const useStyles = makeStyles((theme) =>
-    createStyles({
-        root: {
-            borderRadius: 10,
-            width: '100%',
-            background: 'linear-gradient(90deg, #FE686F 0%, #F78CA0 100%);',
-            marginTop: theme.spacing(2.5),
-        },
-        amount: {
-            fontSize: 18,
-            zIndex: 1,
-            position: 'relative',
-        },
-        content: {
-            boxSizing: 'border-box',
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: theme.spacing(2.5),
-        },
-        ITOAlertContainer: {
-            padding: theme.spacing(0, 2.5, 2.5, 2.5),
-        },
-        ITOAlert: {
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+const useStyles = makeStyles((theme) => ({
+    root: {
+        borderRadius: 10,
+        width: '100%',
+        background: 'linear-gradient(90deg, #FE686F 0%, #F78CA0 100%);',
+        marginTop: theme.spacing(2.5),
+    },
+    amount: {
+        fontSize: 18,
+        zIndex: 1,
+        position: 'relative',
+    },
+    content: {
+        boxSizing: 'border-box',
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'space-between',
+        padding: theme.spacing(2.5),
+    },
+    ITOAlertContainer: {
+        padding: theme.spacing(0, 2.5, 2.5, 2.5),
+    },
+    ITOAlert: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        color: '#fff',
+    },
+    button: {
+        //TODO: https://github.com/mui-org/material-ui/issues/25011
+        '&[disabled]': {
+            opacity: 0.5,
             color: '#fff',
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
         },
-        button: {
-            //TODO: https://github.com/mui-org/material-ui/issues/25011
-            '&[disabled]': {
-                opacity: 0.5,
-                color: '#fff',
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            },
-        },
-    }),
-)
+    },
+}))
 
 export interface ITO_CardProps extends withClasses<never> {
     token?: ERC20TokenDetailed
@@ -65,8 +62,8 @@ export function ITO_Card(props: ITO_CardProps) {
     const classes = useStylesExtends(useStyles(), props)
     const { value: packet, loading: packetLoading, error: packetError, retry: packetRetry } = useMaskITO_Packet()
 
-    //#region calim
-    const [claimState, claimCallback, resetClaimCallback] = useClaimCallback()
+    //#region claim
+    const [claimState, claimCallback, resetClaimCallback] = useMaskClaimCallback()
     const onClaimButtonClick = useCallback(() => {
         claimCallback()
     }, [claimCallback])
@@ -79,7 +76,7 @@ export function ITO_Card(props: ITO_CardProps) {
         .getShareLinkURL?.(
             [
                 `I just claimed ${cashTag}${token?.symbol} with ${formatBalance(
-                    new BigNumber(packet?.claimable ?? '0'),
+                    packet?.claimable,
                     18,
                     6,
                 )}. Follow @realMaskbook (mask.io) to claim airdrop.`,
@@ -90,7 +87,7 @@ export function ITO_Card(props: ITO_CardProps) {
         .toString()
 
     // close the transaction dialog
-    const [_, setTransactionDialogOpen] = useRemoteControlledDialog(
+    const { setDialog: setTransactionDialog } = useRemoteControlledDialog(
         EthereumMessages.events.transactionDialogUpdated,
         (ev) => {
             if (ev.open) return
@@ -104,11 +101,11 @@ export function ITO_Card(props: ITO_CardProps) {
     useEffect(() => {
         if (!packet) return
         if (claimState.type === TransactionStateType.UNKNOWN) return
-        setTransactionDialogOpen({
+        setTransactionDialog({
             open: true,
             shareLink,
             state: claimState,
-            summary: `Claiming ${formatBalance(new BigNumber(packet.claimable), 18, 6)} ${token?.symbol ?? 'Token'}.`,
+            summary: `Claiming ${formatBalance(packet.claimable, 18, 6)} ${token?.symbol ?? 'Token'}.`,
         })
     }, [claimState /* update tx dialog only if state changed */])
     //#endregion
@@ -156,7 +153,7 @@ export function ITO_Card(props: ITO_CardProps) {
                     <Typography>ITO locked:</Typography>
                     <Typography className={classes.amount}>
                         {packet && packet.claimable !== '0'
-                            ? formatBalance(new BigNumber(packet.claimable), token.decimals, 6)
+                            ? formatBalance(packet.claimable, token.decimals, 6)
                             : '0.00'}
                     </Typography>
                 </Box>

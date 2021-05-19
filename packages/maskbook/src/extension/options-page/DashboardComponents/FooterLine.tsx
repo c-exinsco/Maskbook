@@ -1,26 +1,24 @@
-import { makeStyles, createStyles } from '@material-ui/core/styles'
+import { makeStyles } from '@material-ui/core/styles'
 import { Link } from 'react-router-dom'
 import { Breadcrumbs, Theme, Typography, Link as MuiLink } from '@material-ui/core'
 import { useI18N } from '../../../utils/i18n-next-ui'
 import { DashboardAboutDialog } from '../DashboardDialogs/About'
 import { useModal } from '../DashboardDialogs/Base'
 
-const useStyles = makeStyles((theme: Theme) =>
-    createStyles({
-        footerButtons: {
-            '& ol': {
-                justifyContent: 'center',
-            },
+const useStyles = makeStyles((theme: Theme) => ({
+    footerButtons: {
+        '& ol': {
+            justifyContent: 'center',
         },
-        footerButton: {
-            borderRadius: '0',
-            whiteSpace: 'nowrap',
-            '& > p': {
-                fontSize: 12,
-            },
+    },
+    footerButton: {
+        borderRadius: '0',
+        whiteSpace: 'nowrap',
+        '& > p': {
+            fontSize: 12,
         },
-    }),
-)
+    },
+}))
 
 type FooterLinkBaseProps = { title?: string }
 type FooterLinkLinkProps = FooterLinkBaseProps & { to: string }
@@ -90,6 +88,7 @@ export default function FooterLine() {
                 </FooterLink>
                 <FooterLink href={t('dashboard_mobile_test_link')}>{t('dashboard_mobile_test')}</FooterLink>
                 <FooterLink href={t('dashboard_source_code_link')}>{t('dashboard_source_code')}</FooterLink>
+                <FooterLink href={t('dashboard_bounty_list_link')}>{t('dashboard_bounty_list')}</FooterLink>
                 <FooterLink href={t('privacy_policy_link')}>{t('privacy_policy')}</FooterLink>
             </Breadcrumbs>
             {aboutDialog}

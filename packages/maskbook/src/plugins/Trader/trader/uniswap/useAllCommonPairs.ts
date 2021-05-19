@@ -3,7 +3,7 @@ import { flatMap } from 'lodash-es'
 import type { Pair } from '@uniswap/sdk'
 import { toUniswapChainId, toUniswapToken } from '../../helpers'
 import { usePairs, TokenPair, PairState } from './usePairs'
-import { useChainId } from '../../../../web3/hooks/useChainState'
+import { useChainId } from '../../../../web3/hooks/useBlockNumber'
 import type { ERC20TokenDetailed, EtherTokenDetailed } from '../../../../web3/types'
 import { useUniswapToken } from './useUniswapToken'
 import { TradeContext } from '../useTradeContext'
@@ -17,10 +17,10 @@ export function useAllCommonPairs(
     const uniswapTokenA = useUniswapToken(tokenA)
     const uniswapTokenB = useUniswapToken(tokenB)
 
-    const bases = useMemo(() => context?.AGAINST_TOKENS[chainId].map((t) => toUniswapToken(t.chainId, t)) ?? [], [
-        chainId,
-        context,
-    ])
+    const bases = useMemo(
+        () => context?.AGAINST_TOKENS[chainId].map((t) => toUniswapToken(t.chainId, t)) ?? [],
+        [chainId, context],
+    )
     const basePairs = useMemo(
         () =>
             flatMap(bases, (base) => bases.map((otherBase) => [base, otherBase] as TokenPair)).filter(

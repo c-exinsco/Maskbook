@@ -2,7 +2,7 @@ import * as d3 from 'd3'
 import { useEffect, RefObject } from 'react'
 import stringify from 'json-stable-stringify'
 import type { Dimension } from './useDimension'
-import { formatCurrency } from '../Wallet/formatter'
+import { formatCurrency } from '@dimensiondev/maskbook-shared'
 
 export function usePriceLineChart(
     svgRef: RefObject<SVGSVGElement>,
@@ -130,7 +130,7 @@ export function usePriceLineChart(
 
             const { date, value } = bisect(d3.mouse(this)[0])
 
-            tooltip.attr('transform', `translate(${x(date)},${y(value)})`).call(
+            tooltip.attr('transform', `translate(${Number(x(date)) - 18},${y(value)})`).call(
                 callout,
                 `${formatCurrency(value, sign)}
                 ${date.toLocaleString('en', {
