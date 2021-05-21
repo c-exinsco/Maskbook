@@ -6,7 +6,6 @@ import * as database from './database'
 import { resolveChainName } from '../../web3/pipes'
 import type { ChainId } from '../../web3/types'
 import Services from '../../extension/service'
-import { getChainId } from '../../extension/background-script/EthereumService'
 import * as subgraph from './apis'
 
 export async function claimRedPacket(
@@ -35,7 +34,7 @@ export async function claimRedPacket(
         redpacket_id: rpid,
         validation: sha3(from)!,
         // TODO: This is not working on MetaMask cause it require the private key.
-        signature: await Services.Ethereum.sign(verify, from),
+        signature: await Services.Ethereum.personalSign(verify, from),
     }
     const pay = await fetch(
         `${host}/please?payload=${jwt.sign(jwt_encoded, x, { algorithm: 'HS256' })}&network=${network}`,

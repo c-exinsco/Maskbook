@@ -1,7 +1,7 @@
 import type { ERC20TokenRecord } from '../Wallet/database/types'
 import type {
     ERC20TokenDetailed,
-    EtherTokenDetailed,
+    NativeTokenDetailed,
     EthereumTokenType,
     EthereumNetwork,
     TokenOutMask,
@@ -83,7 +83,7 @@ export interface RedPacketSubgraphInMask extends RedPacketBasic {
     total_remaining: string
     last_updated_time: number
     chain_id: number
-    token: EtherTokenDetailed | ERC20TokenDetailed
+    token: NativeTokenDetailed | ERC20TokenDetailed
     creator: {
         name: string
         address: string

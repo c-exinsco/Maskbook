@@ -56,7 +56,7 @@ export interface HappyRedPacket extends BaseContract {
     constructor(jsonInterface: any[], address?: string, options?: ContractOptions): HappyRedPacket
     clone(): HappyRedPacket
     methods: {
-        contract_creator(): TransactionObject<string>
+        contract_creator(): NonPayableTransactionObject<string>
 
         create_red_packet(
             _hash: string | number[],
@@ -76,9 +76,9 @@ export interface HappyRedPacket extends BaseContract {
             password: string,
             _recipient: string,
             validation: string | number[],
-        ): TransactionObject<string>
+        ): NonPayableTransactionObject<string>
 
-        check_availability(id: string | number[]): TransactionObject<{
+        check_availability(id: string | number[]): NonPayableTransactionObject<{
             token_address: string
             balance: string
             total: string
@@ -93,10 +93,10 @@ export interface HappyRedPacket extends BaseContract {
             5: string
         }>
 
-        refund(id: string | number[]): TransactionObject<void>
+        refund(id: string | number[]): NonPayableTransactionObject<void>
     }
     events: {
-        ClaimSuccess: ContractEvent<{
+        ClaimSuccess: ContractEventLog<{
             id: string
             claimer: string
             claimed_value: string
@@ -106,7 +106,7 @@ export interface HappyRedPacket extends BaseContract {
             2: string
             3: string
         }>
-        CreationSuccess: ContractEvent<{
+        CreationSuccess: ContractEventLog<{
             total: string
             id: string
             name: string
@@ -122,7 +122,7 @@ export interface HappyRedPacket extends BaseContract {
             5: string
             6: string
         }>
-        RefundSuccess: ContractEvent<{
+        RefundSuccess: ContractEventLog<{
             id: string
             token_address: string
             remaining_balance: string

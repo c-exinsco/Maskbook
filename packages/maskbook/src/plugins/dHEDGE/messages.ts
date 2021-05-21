@@ -3,6 +3,7 @@ import { createPluginMessage } from '../utils/createPluginMessage'
 import { createPluginRPC } from '../utils/createPluginRPC'
 import { DHEDGE_PLUGIN_ID } from './constants'
 import type { Pool } from './types'
+import type { WebExtensionMessage } from '@dimensiondev/holoflows-kit'
 
 type InvestDialogUpdated =
     | {
@@ -23,7 +24,8 @@ interface DHedgeMessages {
     rpc: unknown
 }
 
-export const PluginDHedgeMessages = createPluginMessage<DHedgeMessages>(DHEDGE_PLUGIN_ID)
+export const PluginDHedgeMessages: WebExtensionMessage<DHedgeMessages> =
+    createPluginMessage<DHedgeMessages>(DHEDGE_PLUGIN_ID)
 export const PluginDHedgeRPC = createPluginRPC(
     DHEDGE_PLUGIN_ID,
     () => import('./services'),

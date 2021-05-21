@@ -1,7 +1,7 @@
 import { makeStyles, Typography, List } from '@material-ui/core'
 import type { RedPacketJSONPayload } from '../types'
 import { useAccount } from '../../../web3/hooks/useAccount'
-import { useChainId } from '../../../web3/hooks/useBlockNumber'
+import { useChainId } from '../../../web3/hooks/useChainId'
 import { RedPacketInHistoryList } from './RedPacketInHistoryList'
 import { useRedPacketHistory } from '../hooks/useRedPacketHistory'
 import { useEffect } from 'react'

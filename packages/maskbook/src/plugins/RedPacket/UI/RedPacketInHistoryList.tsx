@@ -114,7 +114,7 @@ export function RedPacketInHistoryList(props: RedPacketInHistoryListProps) {
     )
 
     //#region remote controlled transaction dialog
-    const [_, setTransactionDialogOpen] = useRemoteControlledDialog(
+    const { setDialog: setTransactionDialogOpen } = useRemoteControlledDialog(
         EthereumMessages.events.transactionDialogUpdated,
         (ev) => {
             if (ev.open) return
