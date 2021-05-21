@@ -196,20 +196,7 @@ export function RedPacket(props: RedPacketProps) {
     // close the transaction dialog
     const { setDialog: setTransactionDialog } = useRemoteControlledDialog(
         EthereumMessages.events.transactionDialogUpdated,
-        (ev) => {
-            if (ev.open) return
-
-            if (
-                claimState.type !== TransactionStateType.CONFIRMED &&
-                refundState.type !== TransactionStateType.CONFIRMED
-            ) {
-                return
-            }
-
-            resetClaimCallback()
-            resetRefundCallback()
-            revalidateAvailability()
-        },
+        (ev) => undefined,
     )
 
     // open the transation dialog
@@ -217,18 +204,24 @@ export function RedPacket(props: RedPacketProps) {
         const state = canClaim ? claimState : refundState
         if (state.type === TransactionStateType.UNKNOWN) return
         if (!availability || !tokenDetailed) return
-        setTransactionDialog({
-            open: true,
-            shareLink: shareLink!.toString(),
-            state,
-            summary: canClaim
-                ? `Claiming red packet from ${payload.sender.name}`
-                : canRefund
-                ? `Refunding red packet for ${formatBalance(availability.balance, tokenDetailed.decimals)} ${
-                      tokenDetailed.symbol
-                  }`
-                : '',
-        })
+        if (state.type === TransactionStateType.HASH) {
+            setTransactionDialog({
+                open: true,
+                shareLink: shareLink!.toString(),
+                state,
+                summary: canClaim
+                    ? `Claiming red packet from ${payload.sender.name}`
+                    : canRefund
+                    ? `Refunding red packet for ${formatBalance(availability.balance, tokenDetailed.decimals)} ${
+                          tokenDetailed.symbol
+                      }`
+                    : '',
+            })
+        } else if (state.type === TransactionStateType.CONFIRMED) {
+            resetClaimCallback()
+            resetRefundCallback()
+            revalidateAvailability()
+        }
     }, [claimState, refundState /* update tx dialog only if state changed */])
     //#endregion
 
