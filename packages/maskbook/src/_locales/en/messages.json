@@ -352,7 +352,7 @@
     "plugin_red_packet_refunding": "Withdrawing...",
     "plugin_red_packet_select_existing": "Past",
     "plugin_red_packet_attached_message": "Attached Message",
-    "plugin_red_packet_from": "From: {{name}}",
+    "plugin_red_packet_from": "From: @{{name}}",
     "plugin_red_packet_description_claimed": "You have already claimed.",
     "plugin_red_packet_description_expired": "The red packet is expired.",
     "plugin_red_packet_description_refunded": "The red packet has been refunded.",

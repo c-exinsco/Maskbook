@@ -352,7 +352,7 @@
     "plugin_red_packet_refunding": "",
     "plugin_red_packet_select_existing": "選擇已有紅包",
     "plugin_red_packet_attached_message": "附言",
-    "plugin_red_packet_from": "來自：{{name}}",
+    "plugin_red_packet_from": "來自：@{{name}}",
     "plugin_red_packet_description_claimed": "已經領取過",
     "plugin_red_packet_description_expired": "已全部被別人領取",
     "plugin_red_packet_description_refunded": "",
