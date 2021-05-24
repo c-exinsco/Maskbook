@@ -1,7 +1,7 @@
 import { Button } from '@material-ui/core'
 import { Trash2 as TrashIcon } from 'react-feather'
 import { WalletRPC } from '../../../../plugins/Wallet/messages'
-import { useI18N, unreachable } from '../../../../utils'
+import { useI18N, unreachable, useSnackbarCallback } from '../../../../utils'
 import { isNative } from '../../../../web3/helpers'
 import type {
     ERC1155TokenDetailed,
@@ -12,7 +12,7 @@ import type {
 import { EthereumTokenType } from '../../../../web3/types'
 import { DebounceButton } from '../../DashboardComponents/ActionButton'
 import SpacedButtonGroup from '../../DashboardComponents/SpacedButtonGroup'
-import { DashboardDialogCore, DashboardDialogWrapper, useSnackbarCallback, WrappedDialogProps } from '../Base'
+import { DashboardDialogCore, DashboardDialogWrapper, WrappedDialogProps } from '../Base'
 import type { WalletProps } from './types'
 
 export function DashboardWalletHideTokenConfirmDialog(
